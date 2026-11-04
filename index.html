@@ -97,20 +97,20 @@
                 <div>Рамка (мм)</div>
             </div>
             <div id="resultsList"></div>
-            <p class="hint">💡 На станке выставляйте: <b>размер Рамки + 22 мм</b>. (Для прямоугольника и прямых граней это будет совпадать с размером стекла).</p>
+            <p class="hint">💡 Для станка: чтобы получить размер рамки, выставляйте <b>Рамка + 22 мм</b> (для прямых граней это будет совпадать с размером стекла).</p>
         </div>
     </div>
 
     <script>
         const OFFSET = 11; // Смещение внутрь (11 мм с каждой стороны)
         let currentShape = 'triangle';
-        let customSidesCount = 4; // Для трапеции/многоугольника по умолчанию 4 грани
+        let customSidesCount = 4; // Для трапеции по умолчанию 4 грани
 
         function setShape(shape, btn) {
             currentShape = shape;
             document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            customSidesCount = 4; // Сбрасываем до трапеции при переключении
+            customSidesCount = 4; 
             renderInputs();
             calculateAndDraw();
         }
@@ -127,14 +127,12 @@
             } else if (currentShape === 'trapezoid') {
                 let html = '';
                 for (let i = 1; i <= customSidesCount; i++) {
-                    // Для первых 4 сторон даем стандартные названия
                     let labelText = `Сторона ${i}`;
                     if (i === 1) labelText = 'Нижнее основание';
                     if (i === 2) labelText = 'Правая сторона';
                     if (i === 3) labelText = 'Верхнее основание';
                     if (i === 4) labelText = 'Левая сторона';
                     
-                    // Значения по умолчанию (делаем красивую равнобедренную трапецию)
                     let defVal = 300;
                     if (i === 1) defVal = 600;
                     if (i === 2) defVal = 400;
@@ -149,9 +147,8 @@
                     `;
                 }
                 
-                // Кнопка добавления грани
                 if (customSidesCount < 8) {
-                    html += `<button class="add-btn" onclick="addSide()">➕ Добавить грань (Угол)</button>`;
+                    html += `<button class="add-btn" onclick="addSide()">➕ Добавить грань</button>`;
                 }
                 
                 container.innerHTML = html;
@@ -165,8 +162,8 @@
         }
 
         function calculateAndDraw() {
-            let pts = []; // Координаты вершин стекла
-            let sides = []; // Длины сторон стекла
+            let pts = []; 
+            let sides = []; 
             let sideNames = [];
 
             if (currentShape === 'triangle') {
@@ -176,7 +173,6 @@
                 
                 if (a <= 0 || b <= 0 || c <= 0 || a+b <= c || a+c <= b || b+c <= a) return;
 
-                // Строим треугольник по 3 сторонам
                 const xC = (a*a + c*c - b*b) / (2*a);
                 const yC = Math.sqrt(c*c - xC*xC);
                 
@@ -185,15 +181,6 @@
                 sideNames = ['Сторона 1', 'Сторона 2', 'Сторона 3'];
             } 
             else if (currentShape === 'trapezoid') {
-                // Строим равнобедренную трапецию на основе нижнего и верхнего основания, и боковой стороны
-                // Чтобы не заставлять вводить углы, мы строим фигуру так, чтобы она замыкалась.
-                // Но если пользователь меняет стороны, мы строим многоугольник по длинам сторон и углам.
-                // Для простоты и точности: если 4 стороны, строим трапецию. Если больше - достраиваем равносторонний многоугольник.
-                
-                // Упрощенный подход: строим многоугольник по сторонам. 
-                // Если это 4 стороны, предполагаем, что это равнобедренная трапеция, где боковые стороны равны.
-                // Если стороны разные, строим произвольный четырехугольник (по теореме косинусов).
-                
                 if (customSidesCount === 4) {
                     const bottom = parseFloat(document.getElementById('poly_len_1').value) || 0;
                     const right = parseFloat(document.getElementById('poly_len_2').value) || 0;
@@ -202,48 +189,36 @@
                     
                     if (bottom <= 0 || top <= 0 || left <= 0 || right <= 0) return;
 
-                    // Строим трапецию (или четырехугольник) по 4 сторонам.
-                    // Предполагаем, что углы при нижнем основании равны, если левая и правая стороны равны.
-                    // Иначе используем стандартную геометрию.
-                    // Для простоты сделаем равнобедренную, если left == right.
-                    
                     if (left === right) {
                         const dx = (bottom - top) / 2;
                         const h = Math.sqrt(left*left - dx*dx);
-                        if (isNaN(h)) return; // Ошибка геометрии
-                        
-                        // Обход по часовой: нижний левый, нижний правый, верхний правый, верхний левый
+                        if (isNaN(h)) return; 
                         pts = [{x:0, y:h}, {x:bottom, y:h}, {x:bottom-dx, y:0}, {x:dx, y:0}];
                         sides = [bottom, left, top, right];
                         sideNames = ['Нижнее', 'Правая', 'Верхнее', 'Левая'];
                     } else {
-                        // Произвольный четырехугольник (упрощенно, для примера)
-                        const h = 300; // Условная высота
+                        const h = 300; 
                         pts = [{x:0, y:h}, {x:bottom, y:h}, {x:top, y:0}, {x:0, y:0}];
                         sides = [bottom, right, top, left];
                         sideNames = ['Нижнее', 'Правая', 'Верхнее', 'Левая'];
                     }
                 } else {
-                    // Многоугольник (5+ сторон) - строим правильный многоугольник, масштабируя стороны
                     const N = customSidesCount;
                     let lengths = [];
                     for (let i = 1; i <= N; i++) {
                         lengths.push(parseFloat(document.getElementById(`poly_len_${i}`).value) || 0);
                     }
                     const angleStep = (2 * Math.PI) / N;
-                    let currAngle = -Math.PI / 2; // Начинаем сверху
+                    let currAngle = -Math.PI / 2; 
                     
-                    // Центр
                     let cx = 0, cy = 0;
                     
                     for (let i = 0; i < N; i++) {
-                        // Для простоты отрисовки берем среднюю длину или масштабируем
                         const r = lengths[i] / (2 * Math.sin(Math.PI / N));
                         pts.push({x: cx + r * Math.cos(currAngle), y: cy + r * Math.sin(currAngle)});
                         currAngle += angleStep;
                     }
                     
-                    // Центрируем координаты
                     const minX = Math.min(...pts.map(p=>p.x));
                     const minY = Math.min(...pts.map(p=>p.y));
                     pts = pts.map(p => ({x: p.x - minX, y: p.y - minY}));
@@ -257,7 +232,6 @@
             drawSVG(pts, sides, sideNames);
         }
 
-        // Геометрическое смещение внутрь
         function getOffsetPolygon(points, offset) {
             const offsetPts = [];
             const n = points.length;
@@ -311,19 +285,16 @@
             
             const w = maxX - minX || 10;
             const h = maxY - minY || 10;
-            const padding = 40; // Отступ для подписей
+            const padding = 40; 
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
-            // Отрисовка контуров
             const createPoly = (pts, stroke, fill, dash) => {
                 let pointsStr = pts.map(p => `${p.x},${p.y}`).join(' ');
                 return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
             };
 
-            // Стекло (синее)
             svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
-            // Рамка (красная пунктирная)
             svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
 
             let resultsHTML = '';
@@ -335,7 +306,6 @@
                 const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
                 const glassLen = sides[i];
 
-                // Подписи на чертеже (размер рамки)
                 const p1 = glassPts[i];
                 const p2 = glassPts[(i + 1) % n];
                 const midX = (p1.x + p2.x) / 2;
@@ -346,7 +316,6 @@
                     <text x="${midX}" y="${midY + 15}" text-anchor="middle" font-size="10" fill="#8E8E93">${Math.round(glassLen)}</text>
                 `;
 
-                // Таблица результатов
                 resultsHTML += `
                     <div class="res-row">
                         <div class="res-col-side">${sideNames[i]}</div>
@@ -359,7 +328,6 @@
             document.getElementById('resultsList').innerHTML = resultsHTML;
         }
 
-        // Инициализация
         renderInputs();
         calculateAndDraw();
     </script>
