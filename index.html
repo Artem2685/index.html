@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Расчет трапециевидной рамки</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.4em; text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.95em; }
+        input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 1em; }
+        .hint { font-size: 0.8em; color: #7f8c8d; margin-top: 3px; }
+        .btn-calc { width: 100%; padding: 15px; background-color: #3498db; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .btn-calc:active { background-color: #2980b9; }
+        .results { margin-top: 20px; background: #e8f6f3; border-radius: 10px; padding: 15px; }
+        .result-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #d1f2eb; }
+        .result-item:last-child { border-bottom: none; }
+        .result-label { font-weight: 500; }
+        .result-value { font-weight: bold; color: #16a085; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📐 Рамка для трапеции</h1>
+
+        <div class="input-group">
+            <label>Длина нижнего основания стекла (мм)</label>
+            <input type="number" id="bottomBase" value="500" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <label>Длина верхнего основания стекла (мм)</label>
+            <input type="number" id="topBase" value="300" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <label>Длина левой боковой стороны стекла (мм)</label>
+            <input type="number" id="leftLeg" value="400" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <label>Длина правой боковой стороны стекла (мм)</label>
+            <input type="number" id="rightLeg" value="400" inputmode="decimal">
+        </div>
+
+        <hr style="border: 1px dashed #ddd; margin: 15px 0;">
+        <p class="hint">Углы при нижнем основании (в градусах):</p>
+        <div class="input-group">
+            <label>Угол слева (α1)</label>
+            <input type="number" id="angle1" value="75" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <label>Угол справа (α2)</label>
+            <input type="number" id="angle2" value="75" inputmode="decimal">
+        </div>
+
+        <button class="btn-calc" onclick="calculate()">Рассчитать рамку</button>
+
+        <div class="results" id="results" style="display:none;">
+            <h3 style="margin-top:0; text-align:center; color:#2c3e50;">Результаты</h3>
+            <div class="result-item">
+                <span class="result-label">Нижнее основание рамки:</span>
+                <span class="result-value" id="res-bottom">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Верхнее основание рамки:</span>
+                <span class="result-value" id="res-top">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Левая боковая сторона:</span>
+                <span class="result-value" id="res-left">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Правая боковая сторона:</span>
+                <span class="result-value" id="res-right">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const offset = 11; // Смещение внутрь с каждой стороны, мм
+
+        function calculate() {
+            // Получаем значения из полей ввода
+            const bottomBase = parseFloat(document.getElementById('bottomBase').value);
+            const topBase = parseFloat(document.getElementById('topBase').value);
+            const leftLeg = parseFloat(document.getElementById('leftLeg').value);
+            const rightLeg = parseFloat(document.getElementById('rightLeg').value);
+            const angle1 = parseFloat(document.getElementById('angle1').value);
+            const angle2 = parseFloat(document.getElementById('angle2').value);
+
+            // Проверка на корректность ввода
+            if ([bottomBase, topBase, leftLeg, rightLeg, angle1, angle2].some(isNaN)) {
+                alert('Пожалуйста, заполните все поля числами.');
+                return;
+            }
+
+            // Перевод углов в радианы для тригонометрических функций
+            const rad1 = angle1 * Math.PI / 180;
+            const rad2 = angle2 * Math.PI / 180;
+
+            // Расчет длин сторон рамки по формулам
+            // Нижнее основание
+            const frameBottom = bottomBase - 2 * (offset / Math.sin(rad1));
+            // Верхнее основание (предполагаем, что углы при верхнем основании те же, что и при нижнем, для равнобедренной трапеции; в общем случае нужно использовать соответствующие углы)
+            const frameTop = topBase - 2 * (offset / Math.sin(rad1)); 
+            // Левая боковая сторона (используем угол при нижнем основании и угол при верхнем, который для простоты принимаем равным 180 - angle1 для трапеции)
+            const frameLeft = leftLeg - offset * (1/Math.sin(rad1) + 1/Math.sin(Math.PI - rad1));
+            // Правая боковая сторона
+            const frameRight = rightLeg - offset * (1/Math.sin(rad2) + 1/Math.sin(Math.PI - rad2));
+
+            // Вывод результатов, округленных до 1 мм
+            document.getElementById('res-bottom').textContent = Math.round(frameBottom) + ' мм';
+            document.getElementById('res-top').textContent = Math.round(frameTop) + ' мм';
+            document.getElementById('res-left').textContent = Math.round(frameLeft) + ' мм';
+            document.getElementById('res-right').textContent = Math.round(frameRight) + ' мм';
+
+            // Показываем блок с результатами
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
