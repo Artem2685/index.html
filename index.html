@@ -5,65 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Конструктор рамки</title>
+    <title>Расчет рамки</title>
     <style>
-        :root {
-            --primary: #007AFF;
-            --danger: #FF3B30;
-            --bg: #F2F2F7;
-            --card-bg: #FFFFFF;
-            --text: #1C1C1E;
-            --text-sec: #8E8E93;
-        }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); 
-            -webkit-user-select: none; user-select: none;
-        }
+        :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sec: #8E8E93; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background: var(--bg); color: var(--text); -webkit-user-select: none; }
         .container { max-width: 600px; margin: 0 auto; }
         
         .shape-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .shape-btn { 
-            padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; 
-            background: var(--card-bg); font-size: 0.85em; font-weight: 600; text-align: center; 
-            cursor: pointer; transition: all 0.2s; color: var(--text);
-        }
+        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.85em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
-        .canvas-container { 
-            background: var(--card-bg); border-radius: 16px; padding: 10px; 
-            margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            display: flex; justify-content: center; align-items: center; height: 220px;
-        }
+        .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 240px; }
         svg { width: 100%; height: 100%; overflow: visible; }
 
-        .input-card { background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .input-row:last-child { margin-bottom: 0; }
-        .input-row label { font-weight: 500; font-size: 0.95em; flex: 1; }
-        .input-row input { 
-            width: 90px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; 
-            font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9;
-        }
+        .input-row label { font-weight: 600; font-size: 0.95em; flex: 1; }
+        .input-row input { width: 90px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9; }
         .input-row input:focus { outline: none; border-color: var(--primary); background: #fff; }
-        
-        .add-btn { 
-            width: 100%; padding: 12px; background: #E5E5EA; border: none; border-radius: 10px; 
-            font-weight: 600; color: var(--primary); margin-top: 10px; cursor: pointer; font-size: 1em;
-        }
-        .add-btn:active { background: #d1d1d6; }
 
-        .results-card { background: var(--card-bg); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; color: var(--text); }
-        .res-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 5px; padding: 8px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.9em; }
+        .results-card { background: var(--card); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; }
+        .res-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; padding: 8px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.9em; }
         .res-row:last-child { border-bottom: none; }
-        .res-header { font-weight: 600; color: var(--text-sec); font-size: 0.75em; text-transform: uppercase; padding-bottom: 5px; border-bottom: 2px solid #E5E5EA; }
-        .res-col-side { text-align: left; font-weight: bold; color: var(--text-sec); }
-        .res-val-glass { color: var(--text-sec); }
+        .res-header { font-weight: 600; color: var(--sec); font-size: 0.75em; text-transform: uppercase; padding-bottom: 5px; border-bottom: 2px solid #E5E5EA; }
+        .res-col-side { text-align: left; font-weight: bold; color: var(--sec); }
+        .res-val-glass { color: var(--sec); }
         .res-val-frame { font-weight: bold; color: var(--primary); font-size: 1.1em; }
         .res-val-saw { font-weight: bold; color: #27ae60; font-size: 1.1em; }
-        
-        .hint { font-size: 0.8em; color: var(--text-sec); margin-top: 15px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px;}
+        .hint { font-size: 0.8em; color: var(--sec); margin-top: 15px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px;}
     </style>
 </head>
 <body>
@@ -90,27 +61,24 @@
                 <div>Пила</div>
             </div>
             <div id="resultsList"></div>
-            <p class="hint">💡 <b>Пила</b> = размер для выставления на станке (Рамка + 22мм).<br>Рамка всегда меньше стекла.</p>
+            <p class="hint">💡 <b>Пила</b> = выставляемый размер на станке (Рамка + 22мм).</p>
         </div>
     </div>
 
     <script>
-        const OFFSET = 11; // 11 мм внутрь
+        const OFFSET = 11;
         let currentShape = 'rect';
-        let customSides = 4; // Для режима добавления граней
 
         function setShape(shape, btn) {
             currentShape = shape;
             document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            customSides = 4; // Сброс количества сторон
             renderInputs();
             calculateAndDraw();
         }
 
         function renderInputs() {
             const container = document.getElementById('inputFields');
-            
             if (currentShape === 'rect') {
                 container.innerHTML = `
                     <div class="input-row"><label>Сторона А (Ширина)</label><input type="number" id="val_a" value="1000" oninput="calculateAndDraw()"></div>
@@ -120,7 +88,7 @@
                 container.innerHTML = `
                     <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="val_a" value="1000" oninput="calculateAndDraw()"></div>
                     <div class="input-row"><label>Сторона Б (Верх)</label><input type="number" id="val_b" value="600" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В (Высота, прямая)</label><input type="number" id="val_h" value="800" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона Г (Высота, прямая)</label><input type="number" id="val_h" value="800" oninput="calculateAndDraw()"></div>
                 `;
             } else if (currentShape === 'iso_trap') {
                 container.innerHTML = `
@@ -130,9 +98,9 @@
                 `;
             } else if (currentShape === 'triangle') {
                 container.innerHTML = `
-                    <div class="input-row"><label>Сторона А</label><input type="number" id="val_a" value="800" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона Б</label><input type="number" id="val_b" value="800" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В</label><input type="number" id="val_c" value="800" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="val_a" value="800" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона Б (Правая)</label><input type="number" id="val_b" value="800" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона В (Левая)</label><input type="number" id="val_c" value="800" oninput="calculateAndDraw()"></div>
                 `;
             }
         }
@@ -146,7 +114,8 @@
                 const a = parseFloat(document.getElementById('val_a').value) || 0;
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 if (a <= 0 || b <= 0) return;
-                pts = [{x:0, y:b}, {x:a, y:b}, {x:a, y:0}, {x:0, y:0}];
+                // Обход строго ПРОТИВ часовой стрелки
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:a, y:b}, {x:0, y:b}];
                 sides = [a, b, a, b];
                 sideNames = ['А (Ширина)', 'Б (Высота)', 'А (Ширина)', 'Б (Высота)'];
             } 
@@ -155,7 +124,9 @@
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 const h = parseFloat(document.getElementById('val_h').value) || 0;
                 if (a <= 0 || b <= 0 || h <= 0 || b >= a) return;
-                pts = [{x:0, y:h}, {x:a, y:h}, {x:b, y:0}, {x:0, y:0}];
+                
+                // Прямоугольная трапеция (прямой угол слева). Обход ПРОТИВ часовой.
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:b, y:h}, {x:0, y:h}];
                 const diag = Math.hypot(a - b, h);
                 sides = [a, diag, b, h];
                 sideNames = ['А (Низ)', 'Б (Наклонная)', 'В (Верх)', 'Г (Высота)'];
@@ -165,20 +136,26 @@
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 const h = parseFloat(document.getElementById('val_h').value) || 0;
                 if (a <= 0 || b <= 0 || h <= 0 || b >= a) return;
+                
                 const dx = (a - b) / 2;
                 const leg = Math.hypot(dx, h);
-                pts = [{x:0, y:h}, {x:a, y:h}, {x:a-dx, y:0}, {x:dx, y:0}];
+                
+                // Равнобедренная трапеция. Обход ПРОТИВ часовой.
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:a-dx, y:h}, {x:dx, y:h}];
                 sides = [a, leg, b, leg];
-                sideNames = ['А (Низ)', 'Б (Бок)', 'В (Верх)', 'Г (Бок)'];
+                sideNames = ['А (Низ)', 'Б (Бок прав)', 'В (Верх)', 'Г (Бок лев)'];
             } 
             else if (currentShape === 'triangle') {
                 const a = parseFloat(document.getElementById('val_a').value) || 0;
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 const c = parseFloat(document.getElementById('val_c').value) || 0;
                 if (a <= 0 || b <= 0 || c <= 0 || a+b <= c || a+c <= b || b+c <= a) return;
+
                 const xC = (a*a + c*c - b*b) / (2*a);
-                const yC = Math.sqrt(c*c - xC*xC);
-                pts = [{x:0, y:yC}, {x:a, y:yC}, {x:xC, y:0}];
+                const yC = Math.sqrt(Math.max(0, c*c - xC*xC));
+                
+                // Обход ПРОТИВ часовой.
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:xC, y:yC}];
                 sides = [a, b, c];
                 sideNames = ['А (Низ)', 'Б (Правая)', 'В (Левая)'];
             }
@@ -187,49 +164,59 @@
             drawSVG(pts, sides, sideNames);
         }
 
-        // --- ЖЕЛЕЗОБЕТОННЫЙ АЛГОРИТМ СМЕЩЕНИЯ ВНУТРЬ ---
+        // --- АБСОЛЮТНО ТОЧНЫЙ АЛГОРИТМ СМЕЩЕНИЯ ВНУТРЬ (ЧЕРЕЗ ПЕРЕСЕЧЕНИЕ ЛИНИЙ) ---
         function getOffsetPolygon(points, offset) {
             const n = points.length;
-            const offsetPts = [];
+            const offsetLines = [];
+
+            // 1. Находим уравнения смещенных линий
             for (let i = 0; i < n; i++) {
-                const p0 = points[(i - 1 + n) % n];
                 const p1 = points[i];
                 const p2 = points[(i + 1) % n];
-
-                // Векторы, направленные ОТ текущей вершины вдоль сторон
-                let v1x = p0.x - p1.x, v1y = p0.y - p1.y;
-                let v2x = p2.x - p1.x, v2y = p2.y - p1.y;
-
-                const len1 = Math.hypot(v1x, v1y);
-                const len2 = Math.hypot(v2x, v2y);
-                v1x /= len1; v1y /= len1;
-                v2x /= len2; v2y /= len2;
-
-                // Биссектриса внутреннего угла
-                let bx = v1x + v2x;
-                let by = v1y + v2y;
-                const blen = Math.hypot(bx, by);
                 
-                // Если угол почти 180 градусов (прямая линия), биссектриса не нужна
-                if (blen < 1e-6) {
-                    // Сдвигаем просто по нормали к первой стороне
-                    const nx = -v1y, ny = v1x;
-                    offsetPts.push({ x: p1.x + nx * offset, y: p1.y + ny * offset });
-                } else {
-                    bx /= blen; by /= blen;
-                    // Вычисляем синус половинного угла через скалярное произведение
-                    const dot = v1x * v2x + v1y * v2y;
-                    const sinHalf = Math.sqrt(Math.max(0, (1 - dot) / 2));
-                    const d = offset / sinHalf;
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                dx /= len; dy /= len;
 
-                    // Новая точка (строго внутри)
-                    offsetPts.push({
-                        x: p1.x + bx * d,
-                        y: p1.y + by * d
+                // Нормаль, направленная ВНУТРЬ (так как обход всегда против часовой)
+                const nx = -dy;
+                const ny = dx;
+
+                // Смещаем линию на offset по нормали
+                const px = p1.x + nx * offset;
+                const py = p1.y + ny * offset;
+
+                // Уравнение линии вида: A*x + B*y = C
+                const A = dy;
+                const B = -dx;
+                const C = A * px + B * py;
+                
+                offsetLines.push({ A, B, C });
+            }
+
+            // 2. Находим точки пересечения соседних линий
+            const newPoints = [];
+            for (let i = 0; i < n; i++) {
+                const L1 = offsetLines[(i - 1 + n) % n]; // Предыдущая линия
+                const L2 = offsetLines[i];               // Текущая линия
+
+                // Решаем систему уравнений (метод Крамера)
+                const det = L1.A * L2.B - L1.B * L2.A;
+
+                if (Math.abs(det) < 1e-6) {
+                    // Если линии параллельны (прямая), просто сдвигаем вершину
+                    newPoints.push({
+                        x: points[i].x + L2.A * offset, // A здесь это нормаль Y
+                        y: points[i].y - L2.B * offset  // B здесь это -нормаль X
                     });
+                } else {
+                    const x = (L1.C * L2.B - L1.B * L2.C) / det;
+                    const y = (L1.A * L2.C - L1.C * L2.A) / det;
+                    newPoints.push({ x, y });
                 }
             }
-            return offsetPts;
+            return newPoints;
         }
 
         function drawSVG(glassPts, sides, sideNames) {
@@ -254,6 +241,7 @@
                 return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
             };
 
+            // Рисуем стекло (синий) и рамку (красный пунктир)
             svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
             svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
 
@@ -268,19 +256,20 @@
 
                 const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
                 const glassLen = sides[i];
-                const sawSetting = frameLen + 22; 
+                const sawSetting = frameLen + 22; // Выставляем на пиле
 
-                // Подписи на чертеже (выносим текст наружу)
+                // Подписи на чертеже
                 const midX = (p1.x + p2.x) / 2;
                 const midY = (p1.y + p2.y) / 2;
                 
+                // Вычисляем внешнюю нормаль для отступа текста
                 let dx = p2.x - p1.x, dy = p2.y - p1.y;
                 const len = Math.hypot(dx, dy);
-                let nx = dy / len, ny = -dx / len; // Перпендикуляр
+                let nx = dy / len, ny = -dx / len;
                 
-                // Проверяем, куда смотрит нормаль (наружу или внутрь)
                 const centerX = (minX + maxX) / 2;
                 const centerY = (minY + maxY) / 2;
+                // Если нормаль смотрит внутрь, разворачиваем её наружу
                 if ((midX - centerX) * nx + (midY - centerY) * ny < 0) {
                     nx = -nx; ny = -ny;
                 }
@@ -288,7 +277,7 @@
                 const textX = midX + nx * 25;
                 const textY = midY + ny * 25;
 
-                // Рисуем букву и размер стекла на чертеже
+                // Рисуем букву и размер стекла возле грани
                 svg.innerHTML += `
                     <text x="${textX}" y="${textY}" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${sideNames[i].charAt(0)}</text>
                     <text x="${textX}" y="${textY + 14}" text-anchor="middle" font-size="12" fill="#007AFF">${Math.round(glassLen)}</text>
