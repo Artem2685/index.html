@@ -3,312 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Конструктор рамки</title>
+    <title>Калькулятор рамки (Трапеция)</title>
     <style>
-        :root {
-            --primary: #007AFF;
-            --danger: #FF3B30;
-            --bg: #F2F2F7;
-            --card-bg: #FFFFFF;
-            --text: #1C1C1E;
-            --text-sec: #8E8E93;
-        }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); 
-            -webkit-user-select: none; user-select: none;
-        }
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        .shape-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .shape-btn { 
-            padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; 
-            background: var(--card-bg); font-size: 0.85em; font-weight: 600; text-align: center; 
-            cursor: pointer; transition: all 0.2s; color: var(--text);
-        }
-        .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
-        
-        .canvas-container { 
-            background: var(--card-bg); border-radius: 16px; padding: 10px; 
-            margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            display: flex; justify-content: center; align-items: center; height: 220px;
-        }
-        svg { width: 100%; height: 100%; overflow: visible; }
-
-        .input-card { background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .input-row:last-child { margin-bottom: 0; }
-        .input-row label { font-weight: 500; font-size: 0.95em; flex: 1; }
-        .input-row input { 
-            width: 90px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; 
-            font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9;
-        }
-        .input-row input:focus { outline: none; border-color: var(--primary); background: #fff; }
-        
-        .add-btn { 
-            width: 100%; padding: 12px; background: #E5E5EA; border: none; border-radius: 10px; 
-            font-weight: 600; color: var(--primary); margin-top: 10px; cursor: pointer; font-size: 1em;
-        }
-        .add-btn:active { background: #d1d1d6; }
-
-        .results-card { background: var(--card-bg); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; color: var(--text); }
-        .res-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 5px; padding: 8px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.9em; }
-        .res-row:last-child { border-bottom: none; }
-        .res-header { font-weight: 600; color: var(--text-sec); font-size: 0.75em; text-transform: uppercase; padding-bottom: 5px; border-bottom: 2px solid #E5E5EA; }
-        .res-col-side { text-align: left; font-weight: bold; color: var(--text-sec); }
-        .res-val-glass { color: var(--text-sec); }
-        .res-val-frame { font-weight: bold; color: var(--primary); font-size: 1.1em; }
-        .res-val-saw { font-weight: bold; color: #27ae60; font-size: 1.1em; }
-        
-        .hint { font-size: 0.8em; color: var(--text-sec); margin-top: 15px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px;}
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
+        .container { max-width: 500px; margin: 0 auto; }
+        h1 { font-size: 1.4rem; text-align: center; margin-bottom: 20px; color: var(--primary); }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
+        .hint { font-size: 0.8rem; color: #64748b; margin-bottom: 8px; display: block; }
+        input { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 16px; transition: border-color 0.2s; }
+        input:focus { border-color: var(--primary); outline: none; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:active { background: #1d4ed8; }
+        .result { display: none; }
+        .result-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+        .result-item:last-child { border-bottom: none; font-weight: 700; font-size: 1.1rem; color: var(--primary); }
+        .result-value { font-weight: 600; }
+        .warning { color: #dc2626; font-size: 0.9rem; text-align: center; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="shape-selector">
-            <div class="shape-btn active" onclick="setShape('rect', this)">Прямоугольник</div>
-            <div class="shape-btn" onclick="setShape('right_trap', this)">Прямоуг. трапеция</div>
-            <div class="shape-btn" onclick="setShape('iso_trap', this)">Равнобедр. трапеция</div>
-            <div class="shape-btn" onclick="setShape('triangle', this)">Треугольник</div>
+        <h1>📏 Расчет рамки (Трапеция)</h1>
+        
+        <div class="card">
+            <label for="w1">Нижнее основание (мм)</label>
+            <input type="number" id="w1" placeholder="Например: 1000" inputmode="numeric">
+
+            <label for="w2">Верхнее основание (мм)</label>
+            <span class="hint">Параллельно нижнему</span>
+            <input type="number" id="w2" placeholder="Например: 800" inputmode="numeric">
+
+            <label for="h">Высота (мм)</label>
+            <span class="hint">Перпендикуляр между основаниями</span>
+            <input type="number" id="h" placeholder="Например: 1200" inputmode="numeric">
+
+            <label for="x">Смещение верха влево/вправо (мм)</label>
+            <span class="hint">0 = левый угол прямой. >0 = сдвиг вправо, <0 = сдвиг влево</span>
+            <input type="number" id="x" placeholder="Например: 100" value="0" inputmode="numeric">
+
+            <button onclick="calculate()">Рассчитать размеры</button>
+            <div id="warning" class="warning">Проверьте введенные данные. Стороны не могут быть отрицательными.</div>
         </div>
 
-        <div class="canvas-container">
-            <svg id="drawingArea" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
-
-        <div class="input-card" id="inputFields"></div>
-
-        <div class="results-card">
-            <div class="results-title">Размеры для раскроя</div>
-            <div class="res-row res-header">
-                <div class="res-col-side">Сторона</div>
-                <div>Стекло</div>
-                <div>Рамка</div>
-                <div>Пила</div>
+        <div id="result" class="card result">
+            <h3 style="margin-top: 0; text-align: center;">Размеры для резки рамки:</h3>
+            <div class="result-item">
+                <span>Нижняя сторона:</span>
+                <span class="result-value" id="res-bottom">0 мм</span>
             </div>
-            <div id="resultsList"></div>
-            <p class="hint">💡 <b>Пила</b> = размер для выставления на станке (Рамка + 22мм).<br>Рамка всегда меньше стекла.</p>
+            <div class="result-item">
+                <span>Правая сторона:</span>
+                <span class="result-value" id="res-right">0 мм</span>
+            </div>
+            <div class="result-item">
+                <span>Верхняя сторона:</span>
+                <span class="result-value" id="res-top">0 мм</span>
+            </div>
+            <div class="result-item">
+                <span>Левая сторона:</span>
+                <span class="result-value" id="res-left">0 мм</span>
+            </div>
+            <div class="result-item">
+                <span>Общая длина (в круг):</span>
+                <span class="result-value" id="res-total">0 мм</span>
+            </div>
         </div>
     </div>
 
     <script>
-        const OFFSET = 11; // 11 мм внутрь
-        let currentShape = 'rect';
-        let customSides = 4; // Для режима добавления граней
+        function calculate() {
+            const w1 = parseFloat(document.getElementById('w1').value);
+            const w2 = parseFloat(document.getElementById('w2').value);
+            const h = parseFloat(document.getElementById('h').value);
+            const x = parseFloat(document.getElementById('x').value) || 0;
+            const d = 11; // Стандартный отступ по ГОСТ (11 мм с каждой стороны)
 
-        function setShape(shape, btn) {
-            currentShape = shape;
-            document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            customSides = 4; // Сброс количества сторон
-            renderInputs();
-            calculateAndDraw();
-        }
-
-        function renderInputs() {
-            const container = document.getElementById('inputFields');
-            
-            if (currentShape === 'rect') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Сторона А (Ширина)</label><input type="number" id="val_a" value="1000" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона Б (Высота)</label><input type="number" id="val_b" value="500" oninput="calculateAndDraw()"></div>
-                `;
-            } else if (currentShape === 'right_trap') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="val_a" value="1000" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона Б (Верх)</label><input type="number" id="val_b" value="600" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В (Высота, прямая)</label><input type="number" id="val_h" value="800" oninput="calculateAndDraw()"></div>
-                `;
-            } else if (currentShape === 'iso_trap') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="val_a" value="1000" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона Б (Верх)</label><input type="number" id="val_b" value="600" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В (Высота)</label><input type="number" id="val_h" value="500" oninput="calculateAndDraw()"></div>
-                `;
-            } else if (currentShape === 'triangle') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Сторона А</label><input type="number" id="val_a" value="800" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона Б</label><input type="number" id="val_b" value="800" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В</label><input type="number" id="val_c" value="800" oninput="calculateAndDraw()"></div>
-                `;
+            if (!w1 || !w2 || !h || w1 <= 0 || w2 <= 0 || h <= 0) {
+                document.getElementById('warning').style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+                return;
             }
-        }
+            document.getElementById('warning').style.display = 'none';
 
-        function calculateAndDraw() {
-            let pts = []; 
-            let sides = []; 
-            let sideNames = [];
-
-            if (currentShape === 'rect') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0;
-                const b = parseFloat(document.getElementById('val_b').value) || 0;
-                if (a <= 0 || b <= 0) return;
-                pts = [{x:0, y:b}, {x:a, y:b}, {x:a, y:0}, {x:0, y:0}];
-                sides = [a, b, a, b];
-                sideNames = ['А (Ширина)', 'Б (Высота)', 'А (Ширина)', 'Б (Высота)'];
-            } 
-            else if (currentShape === 'right_trap') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0;
-                const b = parseFloat(document.getElementById('val_b').value) || 0;
-                const h = parseFloat(document.getElementById('val_h').value) || 0;
-                if (a <= 0 || b <= 0 || h <= 0 || b >= a) return;
-                pts = [{x:0, y:h}, {x:a, y:h}, {x:b, y:0}, {x:0, y:0}];
-                const diag = Math.hypot(a - b, h);
-                sides = [a, diag, b, h];
-                sideNames = ['А (Низ)', 'Б (Наклонная)', 'В (Верх)', 'Г (Высота)'];
-            } 
-            else if (currentShape === 'iso_trap') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0;
-                const b = parseFloat(document.getElementById('val_b').value) || 0;
-                const h = parseFloat(document.getElementById('val_h').value) || 0;
-                if (a <= 0 || b <= 0 || h <= 0 || b >= a) return;
-                const dx = (a - b) / 2;
-                const leg = Math.hypot(dx, h);
-                pts = [{x:0, y:h}, {x:a, y:h}, {x:a-dx, y:0}, {x:dx, y:0}];
-                sides = [a, leg, b, leg];
-                sideNames = ['А (Низ)', 'Б (Бок)', 'В (Верх)', 'Г (Бок)'];
-            } 
-            else if (currentShape === 'triangle') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0;
-                const b = parseFloat(document.getElementById('val_b').value) || 0;
-                const c = parseFloat(document.getElementById('val_c').value) || 0;
-                if (a <= 0 || b <= 0 || c <= 0 || a+b <= c || a+c <= b || b+c <= a) return;
-                const xC = (a*a + c*c - b*b) / (2*a);
-                const yC = Math.sqrt(c*c - xC*xC);
-                pts = [{x:0, y:yC}, {x:a, y:yC}, {x:xC, y:0}];
-                sides = [a, b, c];
-                sideNames = ['А (Низ)', 'Б (Правая)', 'В (Левая)'];
-            }
-
-            if (pts.length < 3) return;
-            drawSVG(pts, sides, sideNames);
-        }
-
-        // --- ЖЕЛЕЗОБЕТОННЫЙ АЛГОРИТМ СМЕЩЕНИЯ ВНУТРЬ ---
-        function getOffsetPolygon(points, offset) {
-            const n = points.length;
-            const offsetPts = [];
-            for (let i = 0; i < n; i++) {
-                const p0 = points[(i - 1 + n) % n];
-                const p1 = points[i];
-                const p2 = points[(i + 1) % n];
-
-                // Векторы, направленные ОТ текущей вершины вдоль сторон
-                let v1x = p0.x - p1.x, v1y = p0.y - p1.y;
-                let v2x = p2.x - p1.x, v2y = p2.y - p1.y;
-
-                const len1 = Math.hypot(v1x, v1y);
-                const len2 = Math.hypot(v2x, v2y);
-                v1x /= len1; v1y /= len1;
-                v2x /= len2; v2y /= len2;
-
-                // Биссектриса внутреннего угла
-                let bx = v1x + v2x;
-                let by = v1y + v2y;
-                const blen = Math.hypot(bx, by);
-                
-                // Если угол почти 180 градусов (прямая линия), биссектриса не нужна
-                if (blen < 1e-6) {
-                    // Сдвигаем просто по нормали к первой стороне
-                    const nx = -v1y, ny = v1x;
-                    offsetPts.push({ x: p1.x + nx * offset, y: p1.y + ny * offset });
-                } else {
-                    bx /= blen; by /= blen;
-                    // Вычисляем синус половинного угла через скалярное произведение
-                    const dot = v1x * v2x + v1y * v2y;
-                    const sinHalf = Math.sqrt(Math.max(0, (1 - dot) / 2));
-                    const d = offset / sinHalf;
-
-                    // Новая точка (строго внутри)
-                    offsetPts.push({
-                        x: p1.x + bx * d,
-                        y: p1.y + by * d
-                    });
-                }
-            }
-            return offsetPts;
-        }
-
-        function drawSVG(glassPts, sides, sideNames) {
-            const svg = document.getElementById('drawingArea');
-            svg.innerHTML = ''; 
-
-            const framePts = getOffsetPolygon(glassPts, OFFSET);
-
-            const allX = glassPts.map(p => p.x).concat(framePts.map(p => p.x));
-            const allY = glassPts.map(p => p.y).concat(framePts.map(p => p.y));
-            const minX = Math.min(...allX), maxX = Math.max(...allX);
-            const minY = Math.min(...allY), maxY = Math.max(...allY);
+            // Координаты вершин (против часовой стрелки: низ-лево, низ-право, верх-право, верх-лево)
+            // A(0, 0), B(w1, 0), C(x + w2, h), D(x, h)
             
-            const w = maxX - minX || 10;
-            const h = maxY - minY || 10;
-            const padding = 50; 
-            
-            svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
-            
-            const createPoly = (pts, stroke, fill, dash) => {
-                let pointsStr = pts.map(p => `${p.x},${p.y}`).join(' ');
-                return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
-            };
+            // Длины сторон стекла
+            const L_bottom = w1;
+            const L_right = Math.hypot(w1 - (x + w2), h);
+            const L_top = w2;
+            const L_left = Math.hypot(x, h);
 
-            svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
-            svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
+            // Внутренние углы в радианах
+            const angleA = Math.atan2(h, x); // Левый нижний
+            const angleB = Math.atan2(h, w1 - (x + w2)); // Правый нижний
+            const angleC = Math.PI - angleB; // Правый верхний (сумма односторонних углов при параллельных прямых = 180)
+            const angleD = Math.PI - angleA; // Левый верхний
 
-            let resultsHTML = '';
-            const n = glassPts.length;
+            // Функция укорочения стороны из-за угла
+            const shorten = (angle) => d / Math.tan(angle / 2);
 
-            for (let i = 0; i < n; i++) {
-                const p1 = glassPts[i];
-                const p2 = glassPts[(i + 1) % n];
-                const pf1 = framePts[i];
-                const pf2 = framePts[(i + 1) % n];
+            // Расчет длин сторон рамки
+            const R_bottom = L_bottom - shorten(angleA) - shorten(angleB);
+            const R_right = L_right - shorten(angleB) - shorten(angleC);
+            const R_top = L_top - shorten(angleC) - shorten(angleD);
+            const R_left = L_left - shorten(angleD) - shorten(angleA);
 
-                const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
-                const glassLen = sides[i];
-                const sawSetting = frameLen + 22; 
+            const total = R_bottom + R_right + R_top + R_left;
 
-                // Подписи на чертеже (выносим текст наружу)
-                const midX = (p1.x + p2.x) / 2;
-                const midY = (p1.y + p2.y) / 2;
-                
-                let dx = p2.x - p1.x, dy = p2.y - p1.y;
-                const len = Math.hypot(dx, dy);
-                let nx = dy / len, ny = -dx / len; // Перпендикуляр
-                
-                // Проверяем, куда смотрит нормаль (наружу или внутрь)
-                const centerX = (minX + maxX) / 2;
-                const centerY = (minY + maxY) / 2;
-                if ((midX - centerX) * nx + (midY - centerY) * ny < 0) {
-                    nx = -nx; ny = -ny;
-                }
-                
-                const textX = midX + nx * 25;
-                const textY = midY + ny * 25;
+            // Вывод результатов (округление до 1 мм для удобства резки)
+            document.getElementById('res-bottom').textContent = Math.round(R_bottom) + ' мм';
+            document.getElementById('res-right').textContent = Math.round(R_right) + ' мм';
+            document.getElementById('res-top').textContent = Math.round(R_top) + ' мм';
+            document.getElementById('res-left').textContent = Math.round(R_left) + ' мм';
+            document.getElementById('res-total').textContent = Math.round(total) + ' мм';
 
-                // Рисуем букву и размер стекла на чертеже
-                svg.innerHTML += `
-                    <text x="${textX}" y="${textY}" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${sideNames[i].charAt(0)}</text>
-                    <text x="${textX}" y="${textY + 14}" text-anchor="middle" font-size="12" fill="#007AFF">${Math.round(glassLen)}</text>
-                `;
-
-                resultsHTML += `
-                    <div class="res-row">
-                        <div class="res-col-side">${sideNames[i]}</div>
-                        <div class="res-val-glass">${Math.round(glassLen)}</div>
-                        <div class="res-val-frame">${Math.round(frameLen)}</div>
-                        <div class="res-val-saw">${Math.round(sawSetting)}</div>
-                    </div>
-                `;
-            }
-
-            document.getElementById('resultsList').innerHTML = resultsHTML;
+            document.getElementById('result').style.display = 'block';
         }
-
-        renderInputs();
-        calculateAndDraw();
     </script>
 </body>
 </html>
