@@ -5,282 +5,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Расчет рамки (любая форма)</title>
+    <title>Расчет рамки по форме</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 10px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { font-size: 1.3em; text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 10px; }
-        .canvas-wrapper { position: relative; width: 100%; border: 2px dashed #bdc3c7; border-radius: 10px; overflow: hidden; background: #ecf0f1; margin-bottom: 15px; touch-action: none; }
-        canvas { display: block; width: 100%; height: auto; cursor: crosshair; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        button { padding: 12px; border: none; border-radius: 8px; font-size: 0.95em; font-weight: bold; cursor: pointer; }
-        .btn-primary { background-color: #3498db; color: white; }
-        .btn-primary:active { background-color: #2980b9; }
-        .btn-danger { background-color: #e74c3c; color: white; }
-        .btn-danger:active { background-color: #c0392b; }
-        .btn-secondary { background-color: #95a5a6; color: white; }
-        .results { background: #e8f6f3; border-radius: 10px; padding: 10px; font-size: 0.9em; max-height: 200px; overflow-y: auto; }
-        .result-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #d1f2eb; }
-        .result-item:last-child { border-bottom: none; }
-        .result-label { font-weight: 500; }
-        .result-value { font-weight: bold; color: #16a085; }
-        .hint { font-size: 0.8em; color: #7f8c8d; text-align: center; margin-bottom: 10px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.3em; text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.95em; color: #34495e; }
+        select, input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #bdc3c7; border-radius: 8px; font-size: 1em; background-color: #fff; }
+        select:focus, input:focus { outline: none; border-color: #3498db; }
+        
+        .inputs-container { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e9ecef; }
+        
+        .btn-calc { width: 100%; padding: 15px; background-color: #27ae60; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .btn-calc:active { background-color: #219150; }
+        
+        .results { margin-top: 20px; background: #e8f6f3; border-radius: 10px; padding: 15px; display: none; }
+        .results h3 { margin-top: 0; text-align: center; color: #2c3e50; margin-bottom: 15px; }
+        
+        .result-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 5px; padding: 10px 0; border-bottom: 1px solid #d1f2eb; font-size: 0.9em; align-items: center; }
+        .result-row:last-child { border-bottom: none; }
+        .result-header { font-weight: bold; color: #34495e; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; }
+        
+        .val-glass { color: #7f8c8d; }
+        .val-frame { font-weight: bold; color: #e74c3c; }
+        .val-saw { font-weight: bold; color: #2980b9; font-size: 1.1em; }
+        
+        .hint { font-size: 0.8em; color: #7f8c8d; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📐 Рамка для нестандартного стекла</h1>
-        <p class="hint">Нажимайте на холст, чтобы расставить вершины стекла. Затем нажмите «Замкнуть».</p>
+        <h1>📐 Калькулятор рамки</h1>
         
-        <div class="canvas-wrapper">
-            <canvas id="canvas" width="600" height="400"></canvas>
+        <div class="form-group">
+            <label>Выберите форму стекла:</label>
+            <select id="shapeType" onchange="updateInputs()">
+                <option value="trapezoid_iso">Трапеция (равнобедренная)</option>
+                <option value="trapezoid_right">Трапеция (прямоугольная)</option>
+                <option value="triangle">Треугольник (по 3 сторонам)</option>
+            </select>
         </div>
 
-        <div class="controls">
-            <button class="btn-secondary" onclick="undoPoint()">↩️ Отменить точку</button>
-            <button class="btn-primary" onclick="closePolygon()">✅ Замкнуть</button>
-            <button class="btn-danger" onclick="clearAll()">🗑️ Очистить</button>
-            <button class="btn-primary" onclick="calculate()">📏 Рассчитать рамку</button>
+        <div class="inputs-container" id="inputsContainer">
+            <!-- Поля ввода будут добавляться сюда через JS -->
         </div>
+
+        <button class="btn-calc" onclick="calculate()">Рассчитать размеры</button>
 
         <div class="results" id="results">
-            <div class="result-item"><span class="result-label">Нарисуйте форму стекла</span></div>
+            <h3>Результаты</h3>
+            <div class="result-row result-header">
+                <div>Сторона</div>
+                <div>Стекло</div>
+                <div>Рамка</div>
+                <div>Пила</div>
+            </div>
+            <div id="resultsList"></div>
+            <p class="hint">* Пила: это значение нужно выставить на станке (Рамка + 22мм).</p>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const offsetMM = 11; // Смещение внутрь с каждой стороны в мм
-        const pxPerMM = 1;   // Масштаб: 1 пиксель = 1 мм (приблизительно для экрана)
-        
-        let points = [];      // Координаты вершин стекла (в пикселях)
-        let closed = false;   // Замкнут ли контур
-        let offsetPoints = []; // Координаты вершин рамки
+        const OFFSET = 11; // Смещение внутрь с каждой стороны в мм
+        const SAW_OFFSET = 22; // Пила отнимает 22мм автоматически
 
-        // Инициализация холста (адаптация под размер экрана)
-        function resizeCanvas() {
-            const wrapper = canvas.parentElement;
-            const rect = wrapper.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.width * 0.7; // Соотношение сторон
-            draw();
-        }
-        window.addEventListener('resize', resizeCanvas);
+        // Обновление полей ввода при смене формы
+        function updateInputs() {
+            const shape = document.getElementById('shapeType').value;
+            const container = document.getElementById('inputsContainer');
+            container.innerHTML = '';
 
-        // Обработка нажатий на холст
-        canvas.addEventListener('mousedown', (e) => {
-            if (closed) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            points.push({ x, y });
-            draw();
-        });
-
-        // Обработка касаний (для телефона)
-        canvas.addEventListener('touchstart', (e) => {
-            if (closed) return;
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-            points.push({ x, y });
-            draw();
-        }, { passive: false });
-
-        // Отрисовка всего
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем сетку (для наглядности)
-            drawGrid();
-
-            // Рисуем контур стекла
-            if (points.length > 0) {
-                ctx.beginPath();
-                ctx.moveTo(points[0].x, points[0].y);
-                for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x, points[i].y);
-                }
-                if (closed) {
-                    ctx.closePath();
-                    ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
-                    ctx.fill();
-                }
-                ctx.strokeStyle = '#3498db';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Рисуем точки
-                points.forEach(p => {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-                    ctx.fillStyle = '#2980b9';
-                    ctx.fill();
-                });
+            if (shape === 'trapezoid_iso') {
+                container.innerHTML = `
+                    <div class="form-group"><label>Нижнее основание стекла (мм)</label><input type="number" id="base1" value="500"></div>
+                    <div class="form-group"><label>Верхнее основание стекла (мм)</label><input type="number" id="base2" value="300"></div>
+                    <div class="form-group"><label>Боковая сторона стекла (мм)</label><input type="number" id="leg" value="200"></div>
+                `;
+            } else if (shape === 'trapezoid_right') {
+                container.innerHTML = `
+                    <div class="form-group"><label>Нижнее основание стекла (мм)</label><input type="number" id="base1" value="500"></div>
+                    <div class="form-group"><label>Верхнее основание стекла (мм)</label><input type="number" id="base2" value="300"></div>
+                    <div class="form-group"><label>Высота (прямая сторона) (мм)</label><input type="number" id="height" value="200"></div>
+                `;
+            } else if (shape === 'triangle') {
+                container.innerHTML = `
+                    <div class="form-group"><label>Сторона 1 (мм)</label><input type="number" id="t_side1" value="400"></div>
+                    <div class="form-group"><label>Сторона 2 (мм)</label><input type="number" id="t_side2" value="400"></div>
+                    <div class="form-group"><label>Сторона 3 (мм)</label><input type="number" id="t_side3" value="400"></div>
+                `;
             }
-
-            // Если контур замкнут, рисуем рамку
-            if (closed && offsetPoints.length > 0) {
-                ctx.beginPath();
-                ctx.moveTo(offsetPoints[0].x, offsetPoints[0].y);
-                for (let i = 1; i < offsetPoints.length; i++) {
-                    ctx.lineTo(offsetPoints[i].x, offsetPoints[i].y);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = '#e74c3c';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]); // Пунктирная линия для рамки
-                ctx.stroke();
-                ctx.setLineDash([]); // Сброс
-            }
+            document.getElementById('results').style.display = 'none';
         }
 
-        function drawGrid() {
-            ctx.strokeStyle = '#dcdde1';
-            ctx.lineWidth = 0.5;
-            const step = 50;
-            for (let x = 0; x < canvas.width; x += step) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += step) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            }
+        // Вспомогательная функция: котангенс угла (угол в радианах)
+        function cot(angle) {
+            return 1 / Math.tan(angle);
         }
 
-        // Отмена последней точки
-        function undoPoint() {
-            if (points.length > 0 && !closed) {
-                points.pop();
-                draw();
-            }
-        }
-
-        // Замыкание контура
-        function closePolygon() {
-            if (points.length < 3) {
-                alert('Нужно минимум 3 точки, чтобы замкнуть фигуру.');
-                return;
-            }
-            closed = true;
-            calculateOffset();
-            draw();
-        }
-
-        // Полная очистка
-        function clearAll() {
-            points = [];
-            offsetPoints = [];
-            closed = false;
-            document.getElementById('results').innerHTML = '<div class="result-item"><span class="result-label">Нарисуйте форму стекла</span></div>';
-            draw();
-        }
-
-        // Вспомогательные функции для геометрии
-        function getNormal(p1, p2) {
-            // Нормаль к отрезку (p1->p2), направленная "внутрь" (предполагаем обход по часовой стрелке)
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const len = Math.hypot(dx, dy);
-            return { x: -dy / len, y: dx / len }; // Для обхода по часовой стрелке нормаль внутрь
-        }
-
-        function calculateOffset() {
-            if (points.length < 3) return;
-            
-            // Определяем направление обхода (по часовой или против) для правильной ориентации нормалей
-            let area = 0;
-            for (let i = 0; i < points.length; i++) {
-                const j = (i + 1) % points.length;
-                area += points[i].x * points[j].y - points[j].x * points[i].y;
-            }
-            const isClockwise = area < 0; // Если площадь отрицательная, обход по часовой
-
-            offsetPoints = [];
-            for (let i = 0; i < points.length; i++) {
-                const prev = points[(i - 1 + points.length) % points.length];
-                const curr = points[i];
-                const next = points[(i + 1) % points.length];
-
-                // Векторы сторон
-                const v1 = { x: curr.x - prev.x, y: curr.y - prev.y };
-                const v2 = { x: next.x - curr.x, y: next.y - curr.y };
-
-                // Нормали (внутрь)
-                let n1 = { x: -v1.y, y: v1.x };
-                let n2 = { x: -v2.y, y: v2.x };
-                
-                if (!isClockwise) {
-                    // Если обход против часовой, инвертируем нормали
-                    n1 = { x: v1.y, y: -v1.x };
-                    n2 = { x: v2.y, y: -v2.x };
-                }
-
-                // Нормируем
-                const len1 = Math.hypot(n1.x, n1.y);
-                const len2 = Math.hypot(n2.x, n2.y);
-                n1 = { x: n1.x / len1, y: n1.y / len1 };
-                n2 = { x: n2.x / len2, y: n2.y / len2 };
-
-                // Биссектриса
-                let bis = { x: n1.x + n2.x, y: n1.y + n2.y };
-                const bisLen = Math.hypot(bis.x, bis.y);
-                if (bisLen === 0) {
-                    // Если векторы противоположны (развернутый угол), берем одну из нормалей
-                    bis = n1;
-                } else {
-                    bis = { x: bis.x / bisLen, y: bis.y / bisLen };
-                }
-
-                // Длина смещения вдоль биссектрисы: l = d / cos(θ/2)
-                // cos(θ/2) = sqrt((1 + dot(n1,n2)) / 2)
-                const dot = n1.x * n2.x + n1.y * n2.y;
-                const cosHalf = Math.sqrt(Math.max(0, (1 + dot) / 2));
-                let l = offsetMM / cosHalf;
-                if (cosHalf < 0.01) l = offsetMM; // Защита от деления на ноль
-
-                // Смещаем вершину
-                offsetPoints.push({
-                    x: curr.x + bis.x * l,
-                    y: curr.y + bis.y * l
-                });
-            }
-        }
-
-        // Расчет и вывод результатов
+        // Основная функция расчета
         function calculate() {
-            if (!closed || offsetPoints.length === 0) {
-                alert('Сначала нарисуйте и замкните форму стекла.');
-                return;
+            const shape = document.getElementById('shapeType').value;
+            let sides = []; // Длины сторон стекла
+            let angles = []; // Внутренние углы в радианах
+            let sideNames = [];
+
+            if (shape === 'trapezoid_iso') {
+                const a = parseFloat(document.getElementById('base1').value);
+                const b = parseFloat(document.getElementById('base2').value);
+                const c = parseFloat(document.getElementById('leg').value);
+                
+                // Проверка на валидность (сторона не может быть меньше разницы оснований)
+                if (c <= Math.abs(a - b) / 2) {
+                    alert('Ошибка: Боковая сторона слишком короткая для таких оснований.');
+                    return;
+                }
+
+                // Вычисление углов
+                const cosAlpha = (a - b) / (2 * c);
+                const alpha = Math.acos(cosAlpha); // Угол при нижнем основании
+                const beta = Math.PI - alpha;      // Угол при верхнем основании
+
+                sides = [a, c, b, c];
+                angles = [alpha, beta, beta, alpha]; // Углы для сторон: нижняя, правая, верхняя, левая
+                sideNames = ['Нижнее осн.', 'Боковая', 'Верхнее осн.', 'Боковая'];
+
+            } else if (shape === 'trapezoid_right') {
+                const a = parseFloat(document.getElementById('base1').value); // Нижнее
+                const b = parseFloat(document.getElementById('base2').value); // Верхнее
+                const h = parseFloat(document.getElementById('height').value); // Высота (прямая сторона)
+                
+                if (a < b) {
+                    alert('Ошибка: В прямоугольной трапеции нижнее основание должно быть больше верхнего.');
+                    return;
+                }
+
+                const L = Math.sqrt(h*h + (a-b)*(a-b)); // Длина наклонной стороны
+                
+                const alpha = Math.PI / 2; // Прямые углы
+                const gamma = Math.atan2(h, a - b); // Угол наклона
+                const delta = Math.PI - gamma; // Тупой угол
+
+                // Обход по часовой стрелке: нижнее, наклонное, верхнее, прямое
+                sides = [a, L, b, h];
+                angles = [alpha, gamma, delta, alpha];
+                sideNames = ['Нижнее осн.', 'Наклонная', 'Верхнее осн.', 'Высота'];
+
+            } else if (shape === 'triangle') {
+                const s1 = parseFloat(document.getElementById('t_side1').value);
+                const s2 = parseFloat(document.getElementById('t_side2').value);
+                const s3 = parseFloat(document.getElementById('t_side3').value);
+
+                // Проверка неравенства треугольника
+                if (s1 + s2 <= s3 || s1 + s3 <= s2 || s2 + s3 <= s1) {
+                    alert('Ошибка: Такого треугольника не существует (сумма двух сторон должна быть больше третьей).');
+                    return;
+                }
+
+                // Теорема косинусов
+                const A = Math.acos((s2*s2 + s3*s3 - s1*s1) / (2*s2*s3));
+                const B = Math.acos((s1*s1 + s3*s3 - s2*s2) / (2*s1*s3));
+                const C = Math.PI - A - B;
+
+                sides = [s1, s2, s3];
+                angles = [A, B, C]; // Углы, противолежащие сторонам 1, 2, 3
+                sideNames = ['Сторона 1', 'Сторона 2', 'Сторона 3'];
             }
 
-            // Вычисляем длины сторон рамки (в пикселях, переводим в мм)
-            let resultsHTML = '<h3 style="margin-top:0; text-align:center; color:#2c3e50;">Стороны рамки</h3>';
-            let totalLength = 0;
-            for (let i = 0; i < offsetPoints.length; i++) {
-                const p1 = offsetPoints[i];
-                const p2 = offsetPoints[(i + 1) % offsetPoints.length];
-                const distPx = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-                const distMM = Math.round(distPx / pxPerMM); // Пересчет в мм
-                totalLength += distMM;
-                resultsHTML += `<div class="result-item">
-                    <span class="result-label">Сторона ${i + 1}:</span>
-                    <span class="result-value">${distMM} мм</span>
-                </div>`;
-            }
-            // Добавляем общую длину (полезно для расчета расхода материала)
-            resultsHTML += `<div class="result-item" style="background:#d1f2eb; margin-top:5px;">
-                <span class="result-label">Общий периметр:</span>
-                <span class="result-value">${Math.round(totalLength)} мм</span>
-            </div>`;
+            // Расчет длин сторон рамки
+            let resultsHTML = '';
+            const n = sides.length;
 
-            document.getElementById('results').innerHTML = resultsHTML;
+            for (let i = 0; i < n; i++) {
+                const glassLen = sides[i];
+                const angle1 = angles[i];
+                const angle2 = angles[(i + 1) % n]; // Следующий угол (замыкаем круг)
+
+                // Формула смещения: L_рамки = L_стекла - d * (ctg(a/2) + ctg(b/2))
+                const reduction = OFFSET * (cot(angle1 / 2) + cot(angle2 / 2));
+                let frameLen = glassLen - reduction;
+
+                // Если рамка получилась слишком короткой (или отрицательной)
+                if (frameLen < 0) frameLen = 0;
+
+                // Установка для пилы (Рамка + 22мм, так как пила отнимает 22мм)
+                const sawSetting = frameLen + SAW_OFFSET;
+
+                resultsHTML += `
+                    <div class="result-row">
+                        <div>${sideNames[i]}</div>
+                        <div class="val-glass">${Math.round(glassLen)}</div>
+                        <div class="val-frame">${Math.round(frameLen)}</div>
+                        <div class="val-saw">${Math.round(sawSetting)}</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('resultsList').innerHTML = resultsHTML;
+            document.getElementById('results').style.display = 'block';
         }
 
-        // Запуск
-        resizeCanvas();
+        // Инициализация при загрузке
+        updateInputs();
     </script>
 </body>
 </html>
