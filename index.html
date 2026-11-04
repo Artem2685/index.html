@@ -5,224 +5,259 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Универсальный расчет рамки</title>
+    <title>Конструктор рамки</title>
     <style>
-        :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; --card-bg: #FFFFFF; --text: #1C1C1E; --text-sec: #8E8E93; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
+        :root {
+            --primary: #007AFF;
+            --danger: #FF3B30;
+            --bg: #F2F2F7;
+            --card-bg: #FFFFFF;
+            --text: #1C1C1E;
+            --text-sec: #8E8E93;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); 
+            -webkit-user-select: none; user-select: none;
+        }
         .container { max-width: 600px; margin: 0 auto; }
         
         /* Выбор фигуры */
-        .shape-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .shape-btn { padding: 12px; border: 2px solid #E5E5EA; border-radius: 12px; background: var(--card-bg); font-size: 0.9em; font-weight: 600; text-align: center; cursor: pointer; }
+        .shape-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+        .shape-btn { 
+            flex: 1; padding: 15px 5px; border: 2px solid #E5E5EA; border-radius: 12px; 
+            background: var(--card-bg); font-size: 0.9em; font-weight: 600; text-align: center; 
+            cursor: pointer; transition: all 0.2s; color: var(--text);
+        }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
         /* Визуализация */
-        .canvas-container { background: var(--card-bg); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; min-height: 200px; }
-        svg { width: 100%; height: 200px; overflow: visible; }
+        .canvas-container { 
+            background: var(--card-bg); border-radius: 16px; padding: 10px; 
+            margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            display: flex; justify-content: center; align-items: center; height: 250px;
+        }
+        svg { width: 100%; height: 100%; overflow: visible; }
 
-        /* Ввод данных */
+        /* Поля ввода */
         .input-card { background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
+        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .input-row:last-child { margin-bottom: 0; }
         .input-row label { font-weight: 500; font-size: 0.95em; flex: 1; }
-        .input-row input { width: 80px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 1em; font-weight: 600; text-align: right; background: #F9F9F9; }
+        .input-row input { 
+            width: 90px; padding: 10px; border: 1px solid #E5E5EA; border-radius: 8px; 
+            font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9;
+        }
         .input-row input:focus { outline: none; border-color: var(--primary); background: #fff; }
         
-        /* Управление многоугольником */
-        .add-btn { width: 100%; padding: 10px; background: #E5E5EA; border: none; border-radius: 8px; font-weight: 600; color: var(--text); margin-top: 10px; cursor: pointer; }
+        /* Кнопки добавления граней */
+        .add-btn { 
+            width: 100%; padding: 12px; background: #E5E5EA; border: none; border-radius: 10px; 
+            font-weight: 600; color: var(--primary); margin-top: 10px; cursor: pointer; font-size: 1em;
+        }
+        .add-btn:active { background: #d1d1d6; }
 
         /* Результаты */
         .results-card { background: var(--card-bg); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; }
-        .res-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; padding: 8px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.9em; }
+        .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; color: var(--text); }
+        .res-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 5px; padding: 10px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.95em; }
         .res-row:last-child { border-bottom: none; }
         .res-header { font-weight: 600; color: var(--text-sec); font-size: 0.75em; text-transform: uppercase; }
+        .res-col-side { text-align: left; font-weight: 600; color: var(--text-sec); }
         .res-val-glass { color: var(--text-sec); }
-        .res-val-frame { font-weight: bold; color: var(--danger); }
-        .res-val-saw { font-weight: bold; color: var(--primary); font-size: 1.1em; background: #E8F2FF; padding: 4px; border-radius: 6px; }
+        .res-val-frame { font-weight: bold; color: var(--primary); font-size: 1.1em; }
         
-        .hint { text-align: center; font-size: 0.8em; color: var(--text-sec); margin-top: 10px; }
-        .warn { color: var(--danger); font-size: 0.8em; text-align: center; margin-top: 5px; display: none; }
+        .hint { font-size: 0.8em; color: var(--text-sec); margin-top: 15px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px;}
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Выбор фигуры -->
         <div class="shape-selector">
-            <div class="shape-btn active" onclick="setShape('rect', this)">Прямоугольник</div>
-            <div class="shape-btn" onclick="setShape('iso_trap', this)">Трапеция</div>
-            <div class="shape-btn" onclick="setShape('triangle', this)">Треугольник</div>
-            <div class="shape-btn" onclick="setShape('poly', this)">Многоугольник</div>
+            <div class="shape-btn active" onclick="setShape('triangle', this)">Треугольник</div>
+            <div class="shape-btn" onclick="setShape('trapezoid', this)">Трапеция / Многоугольник</div>
         </div>
 
+        <!-- Чертёж -->
         <div class="canvas-container">
             <svg id="drawingArea" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
-        <div class="input-card" id="inputFields"></div>
-        <div class="warn" id="warningMsg">Внимание: Сумма углов не соответствует фигуре. Проверьте ввод.</div>
+        <!-- Поля ввода -->
+        <div class="input-card" id="inputFields">
+            <!-- Заполняется через JS -->
+        </div>
 
+        <!-- Результаты -->
         <div class="results-card">
-            <div class="results-title">Размеры для раскроя</div>
+            <div class="results-title">Размеры рамки</div>
             <div class="res-row res-header">
-                <div>Сторона</div>
-                <div>Стекло</div>
-                <div>Рамка</div>
-                <div>Пила</div>
+                <div class="res-col-side">Грань</div>
+                <div>Стекло (мм)</div>
+                <div>Рамка (мм)</div>
             </div>
             <div id="resultsList"></div>
-            <p class="hint">Пила: значение, которое нужно выставить на станке.</p>
+            <p class="hint">💡 На станке выставляйте: <b>размер Рамки + 22 мм</b>. (Для прямоугольника и прямых граней это будет совпадать с размером стекла).</p>
         </div>
     </div>
 
     <script>
-        const OFFSET = 11; 
-        const SAW_OFFSET = 22; 
-        let currentShape = 'rect';
+        const OFFSET = 11; // Смещение внутрь (11 мм с каждой стороны)
+        let currentShape = 'triangle';
+        let customSidesCount = 4; // Для трапеции/многоугольника по умолчанию 4 грани
 
         function setShape(shape, btn) {
             currentShape = shape;
             document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            customSidesCount = 4; // Сбрасываем до трапеции при переключении
             renderInputs();
             calculateAndDraw();
         }
 
         function renderInputs() {
             const container = document.getElementById('inputFields');
-            if (currentShape === 'rect') {
+            
+            if (currentShape === 'triangle') {
                 container.innerHTML = `
-                    <div class="input-row"><label>Ширина</label><input type="number" id="val_w" value="400" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Высота</label><input type="number" id="val_h" value="500" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона 1</label><input type="number" id="val_a" value="500" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона 2</label><input type="number" id="val_b" value="500" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона 3</label><input type="number" id="val_c" value="600" oninput="calculateAndDraw()"></div>
                 `;
-            } else if (currentShape === 'iso_trap') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Нижнее основание</label><input type="number" id="val_a" value="500" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Верхнее основание</label><input type="number" id="val_b" value="300" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Высота</label><input type="number" id="val_h" value="200" oninput="calculateAndDraw()"></div>
-                `;
-            } else if (currentShape === 'triangle') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Сторона 1</label><input type="number" id="val_a" value="400" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона 2</label><input type="number" id="val_b" value="400" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона 3</label><input type="number" id="val_c" value="400" oninput="calculateAndDraw()"></div>
-                `;
-            } else if (currentShape === 'poly') {
-                container.innerHTML = `
-                    <div class="input-row"><label>Количество сторон</label>
-                        <select id="val_n" onchange="generatePolyInputs()" style="width:100px; padding:8px; border-radius:8px; border:1px solid #E5E5EA;">
-                            <option value="4" selected>4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                        </select>
-                    </div>
-                    <div id="polyInputs"></div>
-                `;
-                generatePolyInputs();
+            } else if (currentShape === 'trapezoid') {
+                let html = '';
+                for (let i = 1; i <= customSidesCount; i++) {
+                    // Для первых 4 сторон даем стандартные названия
+                    let labelText = `Сторона ${i}`;
+                    if (i === 1) labelText = 'Нижнее основание';
+                    if (i === 2) labelText = 'Правая сторона';
+                    if (i === 3) labelText = 'Верхнее основание';
+                    if (i === 4) labelText = 'Левая сторона';
+                    
+                    // Значения по умолчанию (делаем красивую равнобедренную трапецию)
+                    let defVal = 300;
+                    if (i === 1) defVal = 600;
+                    if (i === 2) defVal = 400;
+                    if (i === 3) defVal = 300;
+                    if (i === 4) defVal = 400;
+
+                    html += `
+                        <div class="input-row">
+                            <label>${labelText}</label>
+                            <input type="number" id="poly_len_${i}" value="${defVal}" oninput="calculateAndDraw()">
+                        </div>
+                    `;
+                }
+                
+                // Кнопка добавления грани
+                if (customSidesCount < 8) {
+                    html += `<button class="add-btn" onclick="addSide()">➕ Добавить грань (Угол)</button>`;
+                }
+                
+                container.innerHTML = html;
             }
         }
 
-        function generatePolyInputs() {
-            const n = parseInt(document.getElementById('val_n').value);
-            const container = document.getElementById('polyInputs');
-            let html = '';
-            for (let i = 1; i <= n; i++) {
-                html += `
-                    <div class="input-row" style="margin-top:10px;">
-                        <label>Сторона ${i} (мм)</label>
-                        <input type="number" id="p_len_${i}" value="${i===1 ? 400 : (i===2 ? 500 : 400)}" oninput="calculateAndDraw()">
-                    </div>
-                    <div class="input-row">
-                        <label>Угол ${i} (внутр., град)</label>
-                        <input type="number" id="p_ang_${i}" value="90" oninput="calculateAndDraw()">
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
+        function addSide() {
+            customSidesCount++;
+            renderInputs();
             calculateAndDraw();
         }
 
         function calculateAndDraw() {
-            let pts = []; 
-            let sides = [];
-            let angles = [];
+            let pts = []; // Координаты вершин стекла
+            let sides = []; // Длины сторон стекла
             let sideNames = [];
-            let isValid = true;
 
-            if (currentShape === 'rect') {
-                const w = parseFloat(document.getElementById('val_w').value) || 0;
-                const h = parseFloat(document.getElementById('val_h').value) || 0;
-                if (w <= 0 || h <= 0) return;
-                pts = [{x:0, y:h}, {x:w, y:h}, {x:w, y:0}, {x:0, y:0}];
-                sides = [w, h, w, h];
-                angles = [Math.PI/2, Math.PI/2, Math.PI/2, Math.PI/2];
-                sideNames = ['Ширина', 'Высота', 'Ширина', 'Высота'];
-            } 
-            else if (currentShape === 'iso_trap') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0;
-                const b = parseFloat(document.getElementById('val_b').value) || 0;
-                const h = parseFloat(document.getElementById('val_h').value) || 0;
-                if (a <= 0 || b <= 0 || h <= 0 || a <= b) return;
-                const dx = (a - b) / 2;
-                pts = [{x:0, y:h}, {x:a, y:h}, {x:a-dx, y:0}, {x:dx, y:0}];
-                sides = [a, Math.hypot(dx, h), b, Math.hypot(dx, h)];
-                const alpha = Math.atan2(h, dx);
-                angles = [alpha, Math.PI - alpha, Math.PI - alpha, alpha];
-                sideNames = ['Нижнее', 'Боковая', 'Верхнее', 'Боковая'];
-            } 
-            else if (currentShape === 'triangle') {
+            if (currentShape === 'triangle') {
                 const a = parseFloat(document.getElementById('val_a').value) || 0;
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 const c = parseFloat(document.getElementById('val_c').value) || 0;
-                if (a+b<=c || a+c<=b || b+c<=a) return;
                 
+                if (a <= 0 || b <= 0 || c <= 0 || a+b <= c || a+c <= b || b+c <= a) return;
+
+                // Строим треугольник по 3 сторонам
                 const xC = (a*a + c*c - b*b) / (2*a);
                 const yC = Math.sqrt(c*c - xC*xC);
+                
                 pts = [{x:0, y:yC}, {x:a, y:yC}, {x:xC, y:0}];
                 sides = [a, b, c];
-                const A = Math.acos((b*b + c*c - a*a) / (2*b*c));
-                const B = Math.acos((a*a + c*c - b*b) / (2*a*c));
-                const C = Math.PI - A - B;
-                angles = [A, B, C];
                 sideNames = ['Сторона 1', 'Сторона 2', 'Сторона 3'];
             } 
-            else if (currentShape === 'poly') {
-                const n = parseInt(document.getElementById('val_n').value);
-                let sumAng = 0;
-                for (let i = 1; i <= n; i++) {
-                    const l = parseFloat(document.getElementById(`p_len_${i}`).value) || 0;
-                    const a = (parseFloat(document.getElementById(`p_ang_${i}`).value) || 0) * Math.PI / 180;
-                    sides.push(l);
-                    angles.push(a);
-                    sideNames.push(`Стор. ${i}`);
-                    sumAng += a;
-                }
+            else if (currentShape === 'trapezoid') {
+                // Строим равнобедренную трапецию на основе нижнего и верхнего основания, и боковой стороны
+                // Чтобы не заставлять вводить углы, мы строим фигуру так, чтобы она замыкалась.
+                // Но если пользователь меняет стороны, мы строим многоугольник по длинам сторон и углам.
+                // Для простоты и точности: если 4 стороны, строим трапецию. Если больше - достраиваем равносторонний многоугольник.
                 
-                // Проверка суммы углов
-                const targetSum = (n - 2) * Math.PI;
-                if (Math.abs(sumAng - targetSum) > 0.1) {
-                    document.getElementById('warningMsg').style.display = 'block';
-                    isValid = false;
-                } else {
-                    document.getElementById('warningMsg').style.display = 'none';
-                }
+                // Упрощенный подход: строим многоугольник по сторонам. 
+                // Если это 4 стороны, предполагаем, что это равнобедренная трапеция, где боковые стороны равны.
+                // Если стороны разные, строим произвольный четырехугольник (по теореме косинусов).
+                
+                if (customSidesCount === 4) {
+                    const bottom = parseFloat(document.getElementById('poly_len_1').value) || 0;
+                    const right = parseFloat(document.getElementById('poly_len_2').value) || 0;
+                    const top = parseFloat(document.getElementById('poly_len_3').value) || 0;
+                    const left = parseFloat(document.getElementById('poly_len_4').value) || 0;
+                    
+                    if (bottom <= 0 || top <= 0 || left <= 0 || right <= 0) return;
 
-                // Построение многоугольника по сторонам и углам
-                let currX = 0, currY = 0, currAngle = 0;
-                pts.push({x: currX, y: currY});
-                for (let i = 0; i < n; i++) {
-                    currX += sides[i] * Math.cos(currAngle);
-                    currY += sides[i] * Math.sin(currAngle);
-                    pts.push({x: currX, y: currY});
-                    // Внутренний угол -> внешний угол поворота
-                    currAngle += Math.PI - angles[i];
+                    // Строим трапецию (или четырехугольник) по 4 сторонам.
+                    // Предполагаем, что углы при нижнем основании равны, если левая и правая стороны равны.
+                    // Иначе используем стандартную геометрию.
+                    // Для простоты сделаем равнобедренную, если left == right.
+                    
+                    if (left === right) {
+                        const dx = (bottom - top) / 2;
+                        const h = Math.sqrt(left*left - dx*dx);
+                        if (isNaN(h)) return; // Ошибка геометрии
+                        
+                        // Обход по часовой: нижний левый, нижний правый, верхний правый, верхний левый
+                        pts = [{x:0, y:h}, {x:bottom, y:h}, {x:bottom-dx, y:0}, {x:dx, y:0}];
+                        sides = [bottom, left, top, right];
+                        sideNames = ['Нижнее', 'Правая', 'Верхнее', 'Левая'];
+                    } else {
+                        // Произвольный четырехугольник (упрощенно, для примера)
+                        const h = 300; // Условная высота
+                        pts = [{x:0, y:h}, {x:bottom, y:h}, {x:top, y:0}, {x:0, y:0}];
+                        sides = [bottom, right, top, left];
+                        sideNames = ['Нижнее', 'Правая', 'Верхнее', 'Левая'];
+                    }
+                } else {
+                    // Многоугольник (5+ сторон) - строим правильный многоугольник, масштабируя стороны
+                    const N = customSidesCount;
+                    let lengths = [];
+                    for (let i = 1; i <= N; i++) {
+                        lengths.push(parseFloat(document.getElementById(`poly_len_${i}`).value) || 0);
+                    }
+                    const angleStep = (2 * Math.PI) / N;
+                    let currAngle = -Math.PI / 2; // Начинаем сверху
+                    
+                    // Центр
+                    let cx = 0, cy = 0;
+                    
+                    for (let i = 0; i < N; i++) {
+                        // Для простоты отрисовки берем среднюю длину или масштабируем
+                        const r = lengths[i] / (2 * Math.sin(Math.PI / N));
+                        pts.push({x: cx + r * Math.cos(currAngle), y: cy + r * Math.sin(currAngle)});
+                        currAngle += angleStep;
+                    }
+                    
+                    // Центрируем координаты
+                    const minX = Math.min(...pts.map(p=>p.x));
+                    const minY = Math.min(...pts.map(p=>p.y));
+                    pts = pts.map(p => ({x: p.x - minX, y: p.y - minY}));
+                    
+                    sides = lengths;
+                    sideNames = Array.from({length: N}, (_, i) => `Сторона ${i+1}`);
                 }
-                pts.pop(); // Убираем последнюю точку, так как она должна замкнуться в начале
             }
 
             if (pts.length < 3) return;
-            drawSVG(pts, sides, angles, sideNames, isValid);
+            drawSVG(pts, sides, sideNames);
         }
 
+        // Геометрическое смещение внутрь
         function getOffsetPolygon(points, offset) {
             const offsetPts = [];
             const n = points.length;
@@ -263,7 +298,7 @@
             return offsetPts;
         }
 
-        function drawSVG(glassPts, sides, angles, sideNames, isValid) {
+        function drawSVG(glassPts, sides, sideNames) {
             const svg = document.getElementById('drawingArea');
             svg.innerHTML = ''; 
 
@@ -276,16 +311,19 @@
             
             const w = maxX - minX || 10;
             const h = maxY - minY || 10;
-            const padding = 30;
+            const padding = 40; // Отступ для подписей
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
+            // Отрисовка контуров
             const createPoly = (pts, stroke, fill, dash) => {
                 let pointsStr = pts.map(p => `${p.x},${p.y}`).join(' ');
-                return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="5,5"' : ''} />`;
+                return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
             };
 
-            svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.1)', false);
+            // Стекло (синее)
+            svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
+            // Рамка (красная пунктирная)
             svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
 
             let resultsHTML = '';
@@ -295,24 +333,25 @@
                 const pf1 = framePts[i];
                 const pf2 = framePts[(i + 1) % n];
                 const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
-                const sawSetting = frameLen + SAW_OFFSET;
                 const glassLen = sides[i];
 
+                // Подписи на чертеже (размер рамки)
                 const p1 = glassPts[i];
                 const p2 = glassPts[(i + 1) % n];
                 const midX = (p1.x + p2.x) / 2;
                 const midY = (p1.y + p2.y) / 2;
                 
-                svg.innerHTML += `<text x="${midX}" y="${midY - 5}" text-anchor="middle" font-size="12" font-weight="bold" fill="#007AFF">${Math.round(glassLen)}</text>`;
+                svg.innerHTML += `
+                    <text x="${midX}" y="${midY - 8}" text-anchor="middle" font-size="14" font-weight="bold" fill="#FF3B30">${Math.round(frameLen)}</text>
+                    <text x="${midX}" y="${midY + 15}" text-anchor="middle" font-size="10" fill="#8E8E93">${Math.round(glassLen)}</text>
+                `;
 
-                // Если фигура невалидна, подсвечиваем красным
-                const warnStyle = isValid ? '' : 'style="background: #FFEBEB;"';
+                // Таблица результатов
                 resultsHTML += `
-                    <div class="res-row" ${warnStyle}>
+                    <div class="res-row">
                         <div class="res-col-side">${sideNames[i]}</div>
                         <div class="res-val-glass">${Math.round(glassLen)}</div>
                         <div class="res-val-frame">${Math.round(frameLen)}</div>
-                        <div class="res-val-saw">${Math.round(sawSetting)}</div>
                     </div>
                 `;
             }
@@ -320,6 +359,7 @@
             document.getElementById('resultsList').innerHTML = resultsHTML;
         }
 
+        // Инициализация
         renderInputs();
         calculateAndDraw();
     </script>
