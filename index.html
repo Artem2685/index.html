@@ -22,7 +22,6 @@
         }
         .container { max-width: 600px; margin: 0 auto; }
         
-        /* Выбор фигуры */
         .shape-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
         .shape-btn { 
             padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; 
@@ -31,7 +30,6 @@
         }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
-        /* Чертёж */
         .canvas-container { 
             background: var(--card-bg); border-radius: 16px; padding: 10px; 
             margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
@@ -39,7 +37,6 @@
         }
         svg { width: 100%; height: 100%; overflow: visible; }
 
-        /* Поля ввода */
         .input-card { background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .input-row:last-child { margin-bottom: 0; }
@@ -49,8 +46,13 @@
             font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9;
         }
         .input-row input:focus { outline: none; border-color: var(--primary); background: #fff; }
+        
+        .add-btn { 
+            width: 100%; padding: 12px; background: #E5E5EA; border: none; border-radius: 10px; 
+            font-weight: 600; color: var(--primary); margin-top: 10px; cursor: pointer; font-size: 1em;
+        }
+        .add-btn:active { background: #d1d1d6; }
 
-        /* Результаты */
         .results-card { background: var(--card-bg); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; color: var(--text); }
         .res-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 5px; padding: 8px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.9em; }
@@ -66,7 +68,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Выбор фигуры -->
         <div class="shape-selector">
             <div class="shape-btn active" onclick="setShape('rect', this)">Прямоугольник</div>
             <div class="shape-btn" onclick="setShape('right_trap', this)">Прямоуг. трапеция</div>
@@ -74,15 +75,12 @@
             <div class="shape-btn" onclick="setShape('triangle', this)">Треугольник</div>
         </div>
 
-        <!-- Чертёж -->
         <div class="canvas-container">
             <svg id="drawingArea" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
-        <!-- Поля ввода -->
         <div class="input-card" id="inputFields"></div>
 
-        <!-- Результаты -->
         <div class="results-card">
             <div class="results-title">Размеры для раскроя</div>
             <div class="res-row res-header">
@@ -92,18 +90,20 @@
                 <div>Пила</div>
             </div>
             <div id="resultsList"></div>
-            <p class="hint">💡 <b>Пила</b> = размер для выставления на станке (Рамка + 22мм).</p>
+            <p class="hint">💡 <b>Пила</b> = размер для выставления на станке (Рамка + 22мм).<br>Рамка всегда меньше стекла.</p>
         </div>
     </div>
 
     <script>
-        const OFFSET = 11; // 11 мм с каждой стороны
+        const OFFSET = 11; // 11 мм внутрь
         let currentShape = 'rect';
+        let customSides = 4; // Для режима добавления граней
 
         function setShape(shape, btn) {
             currentShape = shape;
             document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            customSides = 4; // Сброс количества сторон
             renderInputs();
             calculateAndDraw();
         }
@@ -132,7 +132,7 @@
                 container.innerHTML = `
                     <div class="input-row"><label>Сторона А</label><input type="number" id="val_a" value="800" oninput="calculateAndDraw()"></div>
                     <div class="input-row"><label>Сторона Б</label><input type="number" id="val_b" value="800" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В</label><input type="number" id="val_c" value="1000" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона В</label><input type="number" id="val_c" value="800" oninput="calculateAndDraw()"></div>
                 `;
             }
         }
@@ -146,35 +146,27 @@
                 const a = parseFloat(document.getElementById('val_a').value) || 0;
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 if (a <= 0 || b <= 0) return;
-                
-                // По часовой стрелке: левый низ, правый низ, правый верх, левый верх
                 pts = [{x:0, y:b}, {x:a, y:b}, {x:a, y:0}, {x:0, y:0}];
                 sides = [a, b, a, b];
                 sideNames = ['А (Ширина)', 'Б (Высота)', 'А (Ширина)', 'Б (Высота)'];
             } 
             else if (currentShape === 'right_trap') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0; // низ
-                const b = parseFloat(document.getElementById('val_b').value) || 0; // верх
-                const h = parseFloat(document.getElementById('val_h').value) || 0; // высота
+                const a = parseFloat(document.getElementById('val_a').value) || 0;
+                const b = parseFloat(document.getElementById('val_b').value) || 0;
+                const h = parseFloat(document.getElementById('val_h').value) || 0;
                 if (a <= 0 || b <= 0 || h <= 0 || b >= a) return;
-                
-                // Прямоугольная трапеция: левая сторона прямая (h), правая наклонная.
-                // По часовой стрелке: левый низ (0,h), правый низ (a,h), правый верх (b,0), левый верх (0,0)
                 pts = [{x:0, y:h}, {x:a, y:h}, {x:b, y:0}, {x:0, y:0}];
                 const diag = Math.hypot(a - b, h);
                 sides = [a, diag, b, h];
                 sideNames = ['А (Низ)', 'Б (Наклонная)', 'В (Верх)', 'Г (Высота)'];
             } 
             else if (currentShape === 'iso_trap') {
-                const a = parseFloat(document.getElementById('val_a').value) || 0; // низ
-                const b = parseFloat(document.getElementById('val_b').value) || 0; // верх
-                const h = parseFloat(document.getElementById('val_h').value) || 0; // высота
+                const a = parseFloat(document.getElementById('val_a').value) || 0;
+                const b = parseFloat(document.getElementById('val_b').value) || 0;
+                const h = parseFloat(document.getElementById('val_h').value) || 0;
                 if (a <= 0 || b <= 0 || h <= 0 || b >= a) return;
-                
                 const dx = (a - b) / 2;
                 const leg = Math.hypot(dx, h);
-                
-                // По часовой стрелке: левый низ, правый низ, правый верх, левый верх
                 pts = [{x:0, y:h}, {x:a, y:h}, {x:a-dx, y:0}, {x:dx, y:0}];
                 sides = [a, leg, b, leg];
                 sideNames = ['А (Низ)', 'Б (Бок)', 'В (Верх)', 'Г (Бок)'];
@@ -184,10 +176,8 @@
                 const b = parseFloat(document.getElementById('val_b').value) || 0;
                 const c = parseFloat(document.getElementById('val_c').value) || 0;
                 if (a <= 0 || b <= 0 || c <= 0 || a+b <= c || a+c <= b || b+c <= a) return;
-
                 const xC = (a*a + c*c - b*b) / (2*a);
                 const yC = Math.sqrt(c*c - xC*xC);
-                
                 pts = [{x:0, y:yC}, {x:a, y:yC}, {x:xC, y:0}];
                 sides = [a, b, c];
                 sideNames = ['А (Низ)', 'Б (Правая)', 'В (Левая)'];
@@ -197,50 +187,49 @@
             drawSVG(pts, sides, sideNames);
         }
 
-        // --- ИСПРАВЛЕННЫЙ АЛГОРИТМ СМЕЩЕНИЯ ВНУТРЬ ---
+        // --- ЖЕЛЕЗОБЕТОННЫЙ АЛГОРИТМ СМЕЩЕНИЯ ВНУТРЬ ---
         function getOffsetPolygon(points, offset) {
             const n = points.length;
-            const offsetLines = [];
-
-            // 1. Создаем смещенные линии для каждой грани
+            const offsetPts = [];
             for (let i = 0; i < n; i++) {
+                const p0 = points[(i - 1 + n) % n];
                 const p1 = points[i];
                 const p2 = points[(i + 1) % n];
-                let dx = p2.x - p1.x;
-                let dy = p2.y - p1.y;
-                const len = Math.hypot(dx, dy);
-                dx /= len; dy /= len;
 
-                // Нормаль, направленная внутрь (для обхода по часовой стрелке)
-                const nx = -dy;
-                const ny = dx;
+                // Векторы, направленные ОТ текущей вершины вдоль сторон
+                let v1x = p0.x - p1.x, v1y = p0.y - p1.y;
+                let v2x = p2.x - p1.x, v2y = p2.y - p1.y;
 
-                // Уравнение линии: nx * x + ny * y = C
-                const C = nx * p1.x + ny * p1.y + offset;
-                offsetLines.push({ nx, ny, C });
-            }
+                const len1 = Math.hypot(v1x, v1y);
+                const len2 = Math.hypot(v2x, v2y);
+                v1x /= len1; v1y /= len1;
+                v2x /= len2; v2y /= len2;
 
-            // 2. Находим пересечения соседних линий
-            const newPoints = [];
-            for (let i = 0; i < n; i++) {
-                const L1 = offsetLines[(i - 1 + n) % n];
-                const L2 = offsetLines[i];
-
-                const det = L1.nx * L2.ny - L1.ny * L2.nx;
-
-                if (Math.abs(det) < 1e-6) {
-                    // Линии параллельны (например, прямоугольник)
-                    newPoints.push({
-                        x: points[i].x + L2.nx * offset,
-                        y: points[i].y + L2.ny * offset
-                    });
+                // Биссектриса внутреннего угла
+                let bx = v1x + v2x;
+                let by = v1y + v2y;
+                const blen = Math.hypot(bx, by);
+                
+                // Если угол почти 180 градусов (прямая линия), биссектриса не нужна
+                if (blen < 1e-6) {
+                    // Сдвигаем просто по нормали к первой стороне
+                    const nx = -v1y, ny = v1x;
+                    offsetPts.push({ x: p1.x + nx * offset, y: p1.y + ny * offset });
                 } else {
-                    const x = (L1.C * L2.ny - L1.ny * L2.C) / det;
-                    const y = (L1.nx * L2.C - L1.C * L2.nx) / det;
-                    newPoints.push({ x, y });
+                    bx /= blen; by /= blen;
+                    // Вычисляем синус половинного угла через скалярное произведение
+                    const dot = v1x * v2x + v1y * v2y;
+                    const sinHalf = Math.sqrt(Math.max(0, (1 - dot) / 2));
+                    const d = offset / sinHalf;
+
+                    // Новая точка (строго внутри)
+                    offsetPts.push({
+                        x: p1.x + bx * d,
+                        y: p1.y + by * d
+                    });
                 }
             }
-            return newPoints;
+            return offsetPts;
         }
 
         function drawSVG(glassPts, sides, sideNames) {
@@ -262,12 +251,10 @@
             
             const createPoly = (pts, stroke, fill, dash) => {
                 let pointsStr = pts.map(p => `${p.x},${p.y}`).join(' ');
-                return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="5,5"' : ''} />`;
+                return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
             };
 
-            // Стекло (синее)
             svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
-            // Рамка (красная пунктирная)
             svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
 
             let resultsHTML = '';
@@ -281,20 +268,17 @@
 
                 const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
                 const glassLen = sides[i];
-                const sawSetting = frameLen + 22; // Выставляем на станке
+                const sawSetting = frameLen + 22; 
 
-                // Подписи на чертеже
+                // Подписи на чертеже (выносим текст наружу)
                 const midX = (p1.x + p2.x) / 2;
                 const midY = (p1.y + p2.y) / 2;
                 
-                // Вычисляем внешнюю нормаль для отступа текста
-                let dx = p2.x - p1.x;
-                let dy = p2.y - p1.y;
+                let dx = p2.x - p1.x, dy = p2.y - p1.y;
                 const len = Math.hypot(dx, dy);
-                let nx = dy / len;
-                let ny = -dx / len;
+                let nx = dy / len, ny = -dx / len; // Перпендикуляр
                 
-                // Сдвигаем текст наружу от центра
+                // Проверяем, куда смотрит нормаль (наружу или внутрь)
                 const centerX = (minX + maxX) / 2;
                 const centerY = (minY + maxY) / 2;
                 if ((midX - centerX) * nx + (midY - centerY) * ny < 0) {
@@ -304,13 +288,12 @@
                 const textX = midX + nx * 25;
                 const textY = midY + ny * 25;
 
-                // Буква стороны (А, Б, В...)
+                // Рисуем букву и размер стекла на чертеже
                 svg.innerHTML += `
                     <text x="${textX}" y="${textY}" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${sideNames[i].charAt(0)}</text>
-                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="11" fill="#007AFF">${Math.round(glassLen)}</text>
+                    <text x="${textX}" y="${textY + 14}" text-anchor="middle" font-size="12" fill="#007AFF">${Math.round(glassLen)}</text>
                 `;
 
-                // Таблица
                 resultsHTML += `
                     <div class="res-row">
                         <div class="res-col-side">${sideNames[i]}</div>
@@ -324,7 +307,6 @@
             document.getElementById('resultsList').innerHTML = resultsHTML;
         }
 
-        // Инициализация
         renderInputs();
         calculateAndDraw();
     </script>
