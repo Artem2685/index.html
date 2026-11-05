@@ -5,40 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Конструктор рамки</title>
+    <title>Расчет рамки</title>
     <style>
         :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sec: #8E8E93; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
         .container { max-width: 600px; margin: 0 auto; }
         
+        /* Кнопки выбора фигуры */
+        .shape-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.8em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
+        
         .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 260px; }
         svg { width: 100%; height: 100%; overflow: visible; }
 
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .input-group { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #E5E5EA; }
-        .input-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        
-        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .input-row label { font-weight: 600; font-size: 0.95em; flex: 1; }
-        .input-row input { width: 90px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9; }
+        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .input-row label { font-weight: 600; font-size: 0.9em; flex: 1; padding-right: 10px; }
+        .input-row input { width: 85px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9; }
         .input-row input:focus { outline: none; border-color: var(--primary); background: #fff; }
-        
-        .angle-row { display: flex; justify-content: space-between; align-items: center; }
-        .angle-row label { font-size: 0.8em; color: var(--sec); flex: 1; }
-        .angle-row input { width: 60px; padding: 6px; border: 1px solid #E5E5EA; border-radius: 6px; font-size: 1em; font-weight: 600; text-align: right; background: #F9F9F9; }
-
-        .btn-group { display: flex; gap: 8px; margin-top: 15px; }
-        .add-btn { flex: 1; padding: 12px; background: #E5E5EA; border: none; border-radius: 10px; font-weight: 600; color: var(--primary); cursor: pointer; font-size: 1em; }
-        .add-btn:active { background: #d1d1d6; }
-        .remove-btn { padding: 12px; background: #FFEBEB; border: none; border-radius: 10px; font-weight: 600; color: var(--danger); cursor: pointer; font-size: 1em; }
 
         .error-box { background: #FFEBEB; color: var(--danger); padding: 10px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.9em; margin-bottom: 15px; display: none; }
 
         .results-card { background: var(--card); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; text-align: center; }
-        .res-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 5px; padding: 6px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.85em; }
+        .res-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1.2fr; gap: 5px; padding: 6px 0; border-bottom: 1px solid #E5E5EA; align-items: center; text-align: center; font-size: 0.85em; }
         .res-row:last-child { border-bottom: none; }
-        .res-header { font-weight: 600; color: var(--sec); font-size: 0.75em; text-transform: uppercase; border-bottom: 2px solid #E5E5EA; }
+        .res-header { font-weight: 600; color: var(--sec); font-size: 0.7em; text-transform: uppercase; border-bottom: 2px solid #E5E5EA; }
         .res-col-side { text-align: left; font-weight: bold; color: var(--sec); }
         .res-val-glass { color: var(--sec); }
         .res-val-frame { font-weight: bold; color: var(--primary); font-size: 1.1em; }
@@ -47,18 +40,24 @@
 </head>
 <body>
     <div class="container">
+        <!-- Выбор фигуры -->
+        <div class="shape-selector">
+            <div class="shape-btn active" onclick="setShape('right_trap', this)">Прямоуг. трапеция</div>
+            <div class="shape-btn" onclick="setShape('iso_trap', this)">Равнобедр. трапеция</div>
+            <div class="shape-btn" onclick="setShape('quad', this)">Косой 4-угольник</div>
+            <div class="shape-btn" onclick="setShape('triangle', this)">Треугольник</div>
+        </div>
+
         <div class="canvas-container">
             <svg id="drawingArea" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
         <div class="error-box" id="errorBox"></div>
 
-        <div class="input-card" id="inputFields">
-            <!-- Поля ввода -->
-        </div>
+        <div class="input-card" id="inputFields"></div>
 
         <div class="results-card">
-            <div class="results-title">Спецификация рамки</div>
+            <div class="results-title">Размеры для раскроя</div>
             <div class="res-row res-header">
                 <div class="res-col-side">Сторона</div>
                 <div>Стекло</div>
@@ -72,119 +71,134 @@
     <script>
         const OFFSET = 11.0; 
         const MIN_ANGLE = 30.0; 
-        const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
+        let currentShape = 'right_trap';
 
-        // Стартовая фигура: треугольник (3 стороны по 800, углы по 60)
-        let sides = [
-            { length: 800, angle: 60 }, // Угол А-Б
-            { length: 800, angle: 60 }, // Угол Б-В
-            { length: 800, angle: 60 }  // Угол В-А
-        ];
-
-        function renderInputs() {
-            const container = document.getElementById('inputFields');
-            container.innerHTML = '';
-
-            sides.forEach((side, index) => {
-                const group = document.createElement('div');
-                group.className = 'input-group';
-
-                // 1. Поле длины
-                const rowLen = document.createElement('div');
-                rowLen.className = 'input-row';
-                rowLen.innerHTML = `
-                    <label>Сторона ${letters[index]} (мм)</label>
-                    <input type="number" id="len_${index}" value="${side.length}" oninput="updateSide(${index}, 'length', this.value)">
-                `;
-                group.appendChild(rowLen);
-
-                // 2. Поле угла (для всех, кроме первой стороны)
-                if (index > 0) {
-                    const rowAng = document.createElement('div');
-                    rowAng.className = 'angle-row';
-                    rowAng.innerHTML = `
-                        <label>Угол между ${letters[index-1]} и ${letters[index]} (°)</label>
-                        <input type="number" id="ang_${index}" value="${side.angle}" oninput="updateSide(${index}, 'angle', this.value)">
-                    `;
-                    group.appendChild(rowAng);
-                }
-
-                container.appendChild(group);
-            });
-
-            // Кнопки управления
-            const btnGroup = document.createElement('div');
-            btnGroup.className = 'btn-group';
-
-            const addBtn = document.createElement('button');
-            addBtn.className = 'add-btn';
-            addBtn.innerText = '➕ Добавить грань';
-            addBtn.onclick = () => {
-                if (sides.length < 8) {
-                    // При добавлении по умолчанию ставим прямой угол (90)
-                    sides.push({ length: 500, angle: 90 });
-                    renderInputs();
-                    calculateAndDraw();
-                }
-            };
-            btnGroup.appendChild(addBtn);
-
-            if (sides.length > 3) {
-                const remBtn = document.createElement('button');
-                remBtn.className = 'remove-btn';
-                remBtn.innerText = '➖';
-                remBtn.onclick = () => {
-                    sides.pop();
-                    renderInputs();
-                    calculateAndDraw();
-                };
-                btnGroup.appendChild(remBtn);
-            }
-
-            container.appendChild(btnGroup);
-        }
-
-        function updateSide(index, field, value) {
-            sides[index][field] = parseFloat(value) || 0;
+        function setShape(shape, btn) {
+            currentShape = shape;
+            document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderInputs();
             calculateAndDraw();
         }
 
-        function calculateAndDraw() {
-            // 1. Проверка углов по ГОСТ
-            const anglesToCheck = sides.slice(1).map(s => s.angle);
-            const minAngle = anglesToCheck.length > 0 ? Math.min(...anglesToCheck) : 90;
-            const errorBox = document.getElementById('errorBox');
+        function renderInputs() {
+            const container = document.getElementById('inputFields');
             
-            if (minAngle < MIN_ANGLE) {
-                errorBox.style.display = 'block';
-                errorBox.innerHTML = `Внимание! Угол ${minAngle.toFixed(1)}° слишком острый.<br>ГОСТ 24866-2014 запрещает производство (мин. 30°).`;
-                drawSVG([], [], true); // Стираем чертеж, показываем ошибку
-                document.getElementById('resultsList').innerHTML = '';
-                return;
-            } else {
-                errorBox.style.display = 'none';
+            if (currentShape === 'right_trap') {
+                // Прямоугольная: нижняя, верхняя, высота
+                container.innerHTML = `
+                    <div class="input-row"><label>Нижнее основание (мм)</label><input type="number" id="val_bottom" value="1000" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Верхнее основание (мм)</label><input type="number" id="val_top" value="600" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Высота прямой стороны (мм)</label><input type="number" id="val_height" value="800" oninput="calculateAndDraw()"></div>
+                `;
+            } else if (currentShape === 'iso_trap') {
+                // Равнобедренная: нижняя, верхняя, высота
+                container.innerHTML = `
+                    <div class="input-row"><label>Нижнее основание (мм)</label><input type="number" id="val_bottom" value="1000" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Верхнее основание (мм)</label><input type="number" id="val_top" value="600" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Высота (мм)</label><input type="number" id="val_height" value="800" oninput="calculateAndDraw()"></div>
+                `;
+            } else if (currentShape === 'quad') {
+                // Произвольный 4-угольник: 4 стороны + диагональ
+                container.innerHTML = `
+                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="q_a" value="1000" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона Б (Правая)</label><input type="number" id="q_b" value="600" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона В (Верх)</label><input type="number" id="q_c" value="600" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона Г (Левая)</label><input type="number" id="q_d" value="600" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Диагональ А-В (мм)</label><input type="number" id="q_diag" value="800" oninput="calculateAndDraw()"></div>
+                    <div style="font-size: 0.75em; color: var(--sec); margin-top: 8px;">Диагональ — расстояние от левого нижнего до правого верхнего угла.</div>
+                `;
+            } else if (currentShape === 'triangle') {
+                container.innerHTML = `
+                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="tr_a" value="800" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона Б (Правая)</label><input type="number" id="tr_b" value="800" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона В (Левая)</label><input type="number" id="tr_c" value="800" oninput="calculateAndDraw()"></div>
+                `;
             }
+        }
 
-            // 2. Построение фигуры (пошагово, как черепашка)
-            let pts = [];
-            let currentAngle = 0; // Начинаем с направления "вправо"
-            let cx = 0, cy = 0;
+        function calculateAndDraw() {
+            let pts = []; 
+            let sideNames = [];
 
-            for (let i = 0; i < sides.length; i++) {
-                pts.push({ x: cx, y: cy });
+            // 1. Построение фигур по замерам
+            if (currentShape === 'right_trap') {
+                const bottom = parseFloat(document.getElementById('val_bottom').value) || 0;
+                const top = parseFloat(document.getElementById('val_top').value) || 0;
+                const h = parseFloat(document.getElementById('val_height').value) || 0;
                 
-                // Двигаемся вдоль текущей стороны
-                const rad = currentAngle * Math.PI / 180;
-                cx += sides[i].length * Math.cos(rad);
-                cy += sides[i].length * Math.sin(rad);
+                if (bottom <= 0 || top <= 0 || h <= 0 || top >= bottom) return;
 
-                // Поворачиваем для следующей стороны
-                if (i < sides.length - 1) {
-                    // Внутренний угол = 180 - угол поворота.
-                    // Значит угол поворота = 180 - внутренний угол.
-                    currentAngle += (180 - sides[i + 1].angle);
-                }
+                // Прямоугольная трапеция. Левый край прямой (высота h).
+                // Обход против часовой: (0,0) -> (bottom,0) -> (top,h) -> (0,h)
+                pts = [
+                    {x: 0, y: 0}, 
+                    {x: bottom, y: 0}, 
+                    {x: top, y: h}, 
+                    {x: 0, y: h}
+                ];
+                sideNames = ['А (Низ)', 'Б (Наклонная)', 'В (Верх)', 'Г (Высота)'];
+            } 
+            else if (currentShape === 'iso_trap') {
+                const bottom = parseFloat(document.getElementById('val_bottom').value) || 0;
+                const top = parseFloat(document.getElementById('val_top').value) || 0;
+                const h = parseFloat(document.getElementById('val_height').value) || 0;
+                
+                if (bottom <= 0 || top <= 0 || h <= 0 || top >= bottom) return;
+                
+                const dx = (bottom - top) / 2;
+                
+                // Равнобедренная трапеция. Симметрична по центру.
+                // Обход против часовой: (0,0) -> (bottom,0) -> (bottom-dx,h) -> (dx,h)
+                pts = [
+                    {x: 0, y: 0}, 
+                    {x: bottom, y: 0}, 
+                    {x: bottom - dx, y: h}, 
+                    {x: dx, y: h}
+                ];
+                sideNames = ['А (Низ)', 'Б (Бок прав)', 'В (Верх)', 'Г (Бок лев)'];
+            } 
+            else if (currentShape === 'quad') {
+                const a = parseFloat(document.getElementById('q_a').value) || 0;
+                const b = parseFloat(document.getElementById('q_b').value) || 0;
+                const c = parseFloat(document.getElementById('q_c').value) || 0;
+                const d = parseFloat(document.getElementById('q_d').value) || 0;
+                const diag = parseFloat(document.getElementById('q_diag').value) || 0;
+                
+                if (a<=0 || b<=0 || c<=0 || d<=0 || diag<=0) return;
+                if (a+b<=diag || a+diag<=b || b+diag<=a) return; // Невалидный треугольник
+                if (c+d<=diag || c+diag<=d || d+diag<=c) return;
+
+                const x3 = (a*a + b*b - diag*diag) / (2*a);
+                const y3 = Math.sqrt(Math.max(0, b*b - x3*x3));
+                
+                const x4 = (a*a + d*d - diag*diag) / (2*a);
+                const y4 = Math.sqrt(Math.max(0, d*d - x4*x4));
+
+                // Обход против часовой: (0,0) -> (a,0) -> (x3,y3) -> (x4,-y4)
+                pts = [
+                    {x:0, y:0}, 
+                    {x:a, y:0}, 
+                    {x:x3, y:y3}, 
+                    {x:x4, y:-y4}
+                ];
+                sideNames = ['А (Низ)', 'Б (Правая)', 'В (Верх)', 'Г (Левая)'];
             }
+            else if (currentShape === 'triangle') {
+                const a = parseFloat(document.getElementById('tr_a').value) || 0;
+                const b = parseFloat(document.getElementById('tr_b').value) || 0;
+                const c = parseFloat(document.getElementById('tr_c').value) || 0;
+                
+                if (a<=0 || b<=0 || c<=0 || a+b<=c || a+c<=b || b+c<=a) return;
+
+                const xC = (a*a + c*c - b*b) / (2*a);
+                const yC = Math.sqrt(Math.max(0, c*c - xC*xC));
+                
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:xC, y:yC}];
+                sideNames = ['А (Низ)', 'Б (Правая)', 'В (Левая)'];
+            }
+
+            if (pts.length < 3) return;
 
             // Центрируем фигуру на экране
             const minX = Math.min(...pts.map(p => p.x));
@@ -195,17 +209,51 @@
             const shiftY = (minY + maxY) / 2;
             pts.forEach(p => { p.x -= shiftX; p.y -= shiftY; });
 
-            // 3. Смещение внутрь на 11 мм
+            // 2. Считаем углы и длины
+            const angles = [];
+            const glassSides = [];
+            const n = pts.length;
+
+            for (let i = 0; i < n; i++) {
+                const p0 = pts[(i - 1 + n) % n];
+                const p1 = pts[i];
+                const p2 = pts[(i + 1) % n];
+                
+                // Длина стороны
+                glassSides.push(Math.hypot(p2.x - p1.x, p2.y - p1.y));
+
+                // Внутренний угол
+                const v1x = p0.x - p1.x, v1y = p0.y - p1.y;
+                const v2x = p2.x - p1.x, v2y = p2.y - p1.y;
+                const dot = v1x * v2x + v1y * v2y;
+                const mag1 = Math.hypot(v1x, v1y);
+                const mag2 = Math.hypot(v2x, v2y);
+                let angleRad = Math.acos(Math.max(-1, Math.min(1, dot / (mag1 * mag2))));
+                angles.push(angleRad * 180 / Math.PI);
+            }
+
+            // Проверка ГОСТ
+            const errorBox = document.getElementById('errorBox');
+            if (Math.min(...angles) < MIN_ANGLE) {
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = `Внимание! Угол ${Math.min(...angles).toFixed(1)}° слишком острый.<br>ГОСТ 24866-2014 запрещает производство (мин. 30°).`;
+                drawSVG(pts, sideNames, [], true, angles, glassSides);
+                document.getElementById('resultsList').innerHTML = '';
+                return;
+            } else {
+                errorBox.style.display = 'none';
+            }
+
+            // 3. Смещение рамки внутрь (11 мм)
             const framePts = getOffsetPolygon(pts, OFFSET);
 
             // 4. Отрисовка
-            drawSVG(pts, framePts, false);
+            drawSVG(pts, sideNames, framePts, false, angles, glassSides);
         }
 
         function getOffsetPolygon(points, offset) {
             const n = points.length;
-            
-            // Принудительно делаем обход против часовой стрелки
+            // Проверка обхода (против часовой)
             let area = 0;
             for (let i = 0; i < n; i++) {
                 const j = (i + 1) % n;
@@ -220,7 +268,6 @@
                 const len = Math.hypot(dx, dy);
                 dx /= len; dy /= len;
                 const nx = -dy, ny = dx; 
-                
                 const px = p1.x + nx * offset, py = p1.y + ny * offset;
                 const A = dy, B = -dx, C = A * px + B * py;
                 offsetLines.push({ A, B, C });
@@ -243,11 +290,11 @@
             return newPoints;
         }
 
-        function drawSVG(glassPts, framePts, hasError) {
+        function drawSVG(glassPts, sideNames, framePts, hasError, angles, glassSides) {
             const svg = document.getElementById('drawingArea');
             svg.innerHTML = ''; 
 
-            if (hasError || glassPts.length < 3) return;
+            if (glassPts.length < 3) return;
 
             const allPts = framePts.length > 0 ? glassPts.concat(framePts) : glassPts;
             const minX = Math.min(...allPts.map(p => p.x));
@@ -266,61 +313,61 @@
                 return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
             };
 
-            // Рисуем стекло (синее). Даже если фигура не замкнулась математически, polygon её замкнет.
+            // Стекло (синее)
             svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
-            
-            // Рисуем рамку (красный пунктир)
-            svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
+            // Рамка (красный пунктир)
+            if (!hasError && framePts.length > 0) {
+                svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
+            }
 
             let resultsHTML = '';
             const n = glassPts.length;
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
 
-            for (let i = 0; i < n; i++) {
-                const p1 = glassPts[i], p2 = glassPts[(i + 1) % n];
-                const pf1 = framePts[i], pf2 = framePts[(i + 1) % n];
-                
-                const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
-                const glassLen = sides[i].length;
-                
-                // Угол пилы для стороны i - это половина угла в её начале и половина в конце.
-                // Для упрощения покажем половину угла в начале.
-                const cutAngle = sides[i].angle / 2;
+            if (!hasError && framePts.length > 0) {
+                for (let i = 0; i < n; i++) {
+                    const p1 = glassPts[i], p2 = glassPts[(i + 1) % n];
+                    const pf1 = framePts[i], pf2 = framePts[(i + 1) % n];
+                    
+                    const frameLen = Math.hypot(pf2.x - pf1.x, pf2.y - pf1.y);
+                    const glassLen = glassSides[i];
+                    
+                    const cutAngle = angles[i] / 2;
 
-                // Отрисовка букв и размеров на чертеже
-                const midX = (p1.x + p2.x) / 2;
-                const midY = (p1.y + p2.y) / 2;
-                
-                let dx = p2.x - p1.x, dy = p2.y - p1.y;
-                const len = Math.hypot(dx, dy);
-                let nx = dy / len, ny = -dx / len;
-                
-                if ((midX - centerX) * nx + (midY - centerY) * ny < 0) {
-                    nx = -nx; ny = -ny;
+                    // Подписи на чертеже
+                    const midX = (p1.x + p2.x) / 2;
+                    const midY = (p1.y + p2.y) / 2;
+                    
+                    let dx = p2.x - p1.x, dy = p2.y - p1.y;
+                    const len = Math.hypot(dx, dy);
+                    let nx = dy / len, ny = -dx / len;
+                    
+                    if ((midX - centerX) * nx + (midY - centerY) * ny < 0) {
+                        nx = -nx; ny = -ny;
+                    }
+                    
+                    const textX = midX + nx * 30;
+                    const textY = midY + ny * 30;
+
+                    svg.innerHTML += `
+                        <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${sideNames[i].charAt(0)}</text>
+                        <text x="${textX}" y="${textY + 10}" text-anchor="middle" font-size="12" fill="#007AFF">${Math.round(glassLen)}</text>
+                    `;
+
+                    resultsHTML += `
+                        <div class="res-row">
+                            <div class="res-col-side">${sideNames[i]}</div>
+                            <div class="res-val-glass">${Math.round(glassLen)}</div>
+                            <div class="res-val-frame">${frameLen.toFixed(1)}</div>
+                            <div class="res-val-angle">${cutAngle.toFixed(1)}°</div>
+                        </div>
+                    `;
                 }
-                
-                const textX = midX + nx * 30;
-                const textY = midY + ny * 30;
-
-                svg.innerHTML += `
-                    <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${letters[i]}</text>
-                    <text x="${textX}" y="${textY + 10}" text-anchor="middle" font-size="12" fill="#007AFF">${Math.round(glassLen)}</text>
-                `;
-
-                resultsHTML += `
-                    <div class="res-row">
-                        <div class="res-col-side">${letters[i]}</div>
-                        <div class="res-val-glass">${Math.round(glassLen)}</div>
-                        <div class="res-val-frame">${frameLen.toFixed(1)}</div>
-                        <div class="res-val-angle">${cutAngle.toFixed(1)}°</div>
-                    </div>
-                `;
+                document.getElementById('resultsList').innerHTML = resultsHTML;
             }
-            document.getElementById('resultsList').innerHTML = resultsHTML;
         }
 
-        // Запуск
         renderInputs();
         calculateAndDraw();
     </script>
