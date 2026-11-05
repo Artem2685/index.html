@@ -11,9 +11,9 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
         .container { max-width: 600px; margin: 0 auto; }
         
-        /* Кнопки выбора фигуры */
+        /* Кнопки выбора фигуры (как на картинке) */
         .shape-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.8em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); transition: all 0.2s; }
+        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.85em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); transition: all 0.2s; }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
         .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 260px; }
@@ -25,7 +25,7 @@
         .input-row input { width: 90px; padding: 8px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 1.1em; font-weight: 600; text-align: right; background: #F9F9F9; }
         .input-row input:focus { outline: none; border-color: var(--primary); background: #fff; }
 
-        .warning-text { color: #E67E22; font-size: 0.8em; margin-top: 10px; display: none; text-align: center; }
+        .warning-text { color: #E67E22; font-size: 0.8em; margin-top: 10px; display: none; text-align: center; font-weight: 600; }
 
         .results-card { background: var(--card); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; text-align: center; }
@@ -42,9 +42,9 @@
 <body>
     <div class="container">
         <div class="shape-selector">
-            <div class="shape-btn active" onclick="setShape('normal_trap', this)">Обычная трапеция</div>
-            <div class="shape-btn" onclick="setShape('right_trap', this)">Прямоуг. трапеция</div>
-            <div class="shape-btn" onclick="setShape('iso_trap', this)">Равнобедр. трапеция</div>
+            <div class="shape-btn active" onclick="setShape('right_trap', this)">Прямоугольная трапеция</div>
+            <div class="shape-btn" onclick="setShape('iso_trap', this)">Равнобедренная трапеция</div>
+            <div class="shape-btn" onclick="setShape('normal_trap', this)">Обычная трапеция</div>
             <div class="shape-btn" onclick="setShape('triangle', this)">Треугольник</div>
         </div>
 
@@ -52,8 +52,8 @@
             <svg id="drawingArea" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
+        <div class="warning-text" id="warningText">Геометрия не идеальна, построен 4-угольник.</div>
         <div class="input-card" id="inputFields"></div>
-        <div class="warning-text" id="warningText">Геометрия стекла не идеальна. Построен произвольный 4-угольник.</div>
 
         <div class="results-card">
             <div class="results-title">Размеры для раскроя</div>
@@ -70,7 +70,7 @@
 
     <script>
         const OFFSET = 11.0; 
-        let currentShape = 'normal_trap';
+        let currentShape = 'right_trap';
 
         function setShape(shape, btn) {
             currentShape = shape;
@@ -85,11 +85,18 @@
             
             if (currentShape === 'triangle') {
                 container.innerHTML = `
-                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="tr_a" value="880" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона Б (Лево)</label><input type="number" id="tr_b" value="590" oninput="calculateAndDraw()"></div>
-                    <div class="input-row"><label>Сторона В (Право)</label><input type="number" id="tr_c" value="1060" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="t_a" value="880" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона Б (Лево)</label><input type="number" id="t_b" value="590" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона В (Право)</label><input type="number" id="t_c" value="1060" oninput="calculateAndDraw()"></div>
+                `;
+            } else if (currentShape === 'iso_trap') {
+                container.innerHTML = `
+                    <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="q_a" value="1000" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Сторона В (Верх)</label><input type="number" id="q_c" value="600" oninput="calculateAndDraw()"></div>
+                    <div class="input-row"><label>Высота (мм)</label><input type="number" id="q_h" value="800" oninput="calculateAndDraw()"></div>
                 `;
             } else {
+                // Прямоугольная и Обычная (ввод 4 сторон)
                 container.innerHTML = `
                     <div class="input-row"><label>Сторона А (Низ)</label><input type="number" id="q_a" value="660" oninput="calculateAndDraw()"></div>
                     <div class="input-row"><label>Сторона Б (Лево)</label><input type="number" id="q_b" value="850" oninput="calculateAndDraw()"></div>
@@ -102,13 +109,13 @@
         function calculateAndDraw() {
             let pts = []; 
             let sideNames = [];
-            let warningBox = document.getElementById('warningText');
-            warningBox.style.display = 'none';
+            let warnBox = document.getElementById('warningText');
+            warnBox.style.display = 'none';
 
             if (currentShape === 'triangle') {
-                const a = parseFloat(document.getElementById('tr_a').value) || 0;
-                const b = parseFloat(document.getElementById('tr_b').value) || 0;
-                const c = parseFloat(document.getElementById('tr_c').value) || 0;
+                const a = parseFloat(document.getElementById('t_a').value) || 0;
+                const b = parseFloat(document.getElementById('t_b').value) || 0;
+                const c = parseFloat(document.getElementById('t_c').value) || 0;
                 
                 if (a<=0 || b<=0 || c<=0 || a+b<=c || a+c<=b || b+c<=a) return;
 
@@ -116,86 +123,139 @@
                 const yC = Math.sqrt(Math.max(0, c*c - xC*xC));
                 
                 pts = [{x:0, y:0}, {x:a, y:0}, {x:xC, y:yC}];
-                sideNames = ['А (Низ)', 'Б (Право)', 'В (Лево)'];
+                sideNames = ['А (Низ)', 'Г (Право)', 'Б (Лево)'];
             } 
+            else if (currentShape === 'iso_trap') {
+                const a = parseFloat(document.getElementById('q_a').value) || 0;
+                const c = parseFloat(document.getElementById('q_c').value) || 0;
+                const h = parseFloat(document.getElementById('q_h').value) || 0;
+                
+                if (a<=0 || c<=0 || h<=0 || c>=a) return;
+                const dx = (a - c) / 2;
+                
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:a-dx, y:h}, {x:dx, y:h}];
+                sideNames = ['А (Низ)', 'Г (Право)', 'В (Верх)', 'Б (Лево)'];
+            }
             else {
+                // Прямоугольная и Обычная трапеция (по 4 сторонам)
                 const a = parseFloat(document.getElementById('q_a').value) || 0; // Низ
                 const b = parseFloat(document.getElementById('q_b').value) || 0; // Лево
                 const c = parseFloat(document.getElementById('q_c').value) || 0; // Верх
                 const d = parseFloat(document.getElementById('q_d').value) || 0; // Право
-                
+
                 if (a<=0 || b<=0 || c<=0 || d<=0) return;
 
-                // Пытаемся построить как идеальную трапецию (верх и низ параллельны)
-                // Формула высоты h для трапеции по 4 сторонам
-                const diff = Math.abs(a - c);
-                let isTrapezoid = false;
-                let h = 0;
-                let shift = 0;
-
-                if (diff > 0.1) {
-                    // Формула: x = ((a-c)^2 + b^2 - d^2) / (2 * (a-c))
-                    const x = ((a - c)*(a - c) + b*b - d*d) / (2 * (a - c));
-                    const hSq = b*b - x*x;
-                    if (hSq > 0) {
-                        h = Math.sqrt(hSq);
-                        shift = x;
-                        isTrapezoid = true;
-                    }
-                } else if (a === c) {
-                    // Если верх и низ равны, это параллелограмм. Он возможен только если b === d
-                    if (b === d) {
-                        h = b; // Упрощенно
-                        shift = 0;
-                        isTrapezoid = true;
-                    }
-                }
-
-                if (isTrapezoid) {
-                    // Строим красивую трапецию
-                    pts = [
-                        {x:0, y:0}, 
-                        {x:a, y:0}, 
-                        {x:shift + c, y:h}, 
-                        {x:shift, y:h}
-                    ];
-                } else {
-                    // Если геометрия невозможна (как в примере 660, 850, 721, 1140)
-                    // Строим произвольный 4-угольник, предполагая прямой угол между Низом и Лево
-                    warningBox.style.display = 'block';
+                if (currentShape === 'right_trap') {
+                    // Прямоугольная трапеция: левый нижний угол 90 градусов.
+                    // Координаты: (0,0) -> (a,0) -> (x,y) -> (0,b).
+                    // Точка (x,y) ищется пересечением двух окружностей:
+                    // 1. От (0,b) радиус c.
+                    // 2. От (a,0) радиус d.
                     
-                    // Точка 1 (низ-лево) = (0,0)
-                    // Точка 2 (низ-право) = (a, 0)
-                    // Точка 3 (верх-лево) = (0, b)
-                    // Точка 4 (верх-право) - находим пересечением окружностей
+                    const dist = Math.hypot(a, b); // Расстояние между центрами
                     
-                    // Окружность 1 (от верх-лево): x^2 + (y-b)^2 = c^2
-                    // Окружность 2 (от низ-право): (x-a)^2 + y^2 = d^2
-                    
-                    // Расстояние между центрами:
-                    const dist = Math.hypot(a, b); 
-                    // Проверка на существование треугольника
                     if (dist > c + d || dist < Math.abs(c - d)) {
-                        pts = [{x:0, y:0}, {x:a, y:0}, {x:a, y:b}, {x:0, y:b}]; // fallback прямоугольник
+                        warnBox.style.display = 'block';
+                        pts = [{x:0, y:0}, {x:a, y:0}, {x:a, y:b}, {x:0, y:b}]; // Fallback
                     } else {
-                        // Координаты пересечения
-                        const a1 = (c*c - d*d + a*a + b*b) / 2;
-                        const x = a1 / a - (b / a) * Math.sqrt(Math.max(0, (a*a + b*b) - (a1*a1)/(a*a)));
-                        const y = Math.sqrt(Math.max(0, c*c - x*x)) + b; // Выбираем верхнее пересечение
+                        // Решение системы уравнений для пересечения окружностей
+                        const A = (c*c - d*d + a*a + b*b) / (2*a);
+                        const B = (b/a) * Math.sqrt(Math.max(0, c*c - (A - a)*(A - a) - b*b + b*b)); // упрощенно
                         
-                        // Упорядочиваем по часовой стрелке
-                        pts = [
-                            {x:0, y:0}, 
-                            {x:a, y:0}, 
-                            {x:x, y:y}, 
-                            {x:0, y:b}
-                        ];
+                        // Точное решение квадратного уравнения
+                        const k = (a*a - b*b - c*c + d*d) / a;
+                        const A2 = 1 + (k*k)/(4*b*b);
+                        const B2 = -k + (k*b)/b; // упрощенно
+                        // Используем формулу: y = (k - 2x) / (2b)
+                        // (x-a)^2 + ((k-2x)/(2b))^2 = d^2
+                        
+                        const p = a;
+                        const q = b;
+                        const r = c;
+                        const s = d;
+                        
+                        const expr = (p*p - q*q - r*r + s*s) / p;
+                        const A_quad = 1 + (expr*expr)/(4*q*q);
+                        const B_quad = -2*p - (expr*expr)/(q*q) + (expr*expr)/(2*q*q); // Need to re-derive carefully
+                        
+                        // Более надежный метод: решаем через площадь треугольника
+                        // Треугольник (0,b), (a,0), (x,y).
+                        // Стороны: dist, c, d.
+                        // Площадь по Герону:
+                        const p_semi = (dist + c + d) / 2;
+                        const area = Math.sqrt(p_semi * (p_semi - dist) * (p_semi - c) * (p_semi - d));
+                        
+                        // Высота к стороне dist:
+                        const h_dist = (2 * area) / dist;
+                        
+                        // Координаты проекции точки (x,y) на отрезок (0,b)-(a,0):
+                        // Расстояние от (0,b) до проекции:
+                        const proj_dist = (c*c - d*d + dist*dist) / (2 * dist);
+                        
+                        // Вектор от (0,b) к (a,0):
+                        const vx = a / dist;
+                        const vy = -b / dist;
+                        
+                        // Точка проекции:
+                        const px = 0 + proj_dist * vx;
+                        const py = b + proj_dist * vy;
+                        
+                        // Вектор нормали:
+                        const nx = -vy;
+                        const ny = vx;
+                        
+                        // Две возможные точки (выбираем ту, что выше):
+                        const x1 = px + h_dist * nx;
+                        const y1 = py + h_dist * ny;
+                        const x2 = px - h_dist * nx;
+                        const y2 = py - h_dist * ny;
+                        
+                        // Выбираем точку с большим Y (верхнюю)
+                        const x = y1 > y2 ? x1 : x2;
+                        const y = y1 > y2 ? y1 : y2;
+                        
+                        pts = [{x:0, y:0}, {x:a, y:0}, {x:x, y:y}, {x:0, y:b}];
                     }
+                    sideNames = ['А (Низ)', 'Г (Право)', 'В (Верх)', 'Б (Лево)'];
+                } 
+                else {
+                    // Обычная трапеция (пытаемся построить с параллельными основаниями)
+                    const diff = Math.abs(a - c);
+                    let isTrapezoid = false;
+                    let h = 0, shift = 0;
+
+                    if (diff > 0.1) {
+                        const x = ((a - c)*(a - c) + b*b - d*d) / (2 * (a - c));
+                        const hSq = b*b - x*x;
+                        if (hSq > 0) {
+                            h = Math.sqrt(hSq);
+                            shift = x;
+                            isTrapezoid = true;
+                        }
+                    }
+
+                    if (isTrapezoid) {
+                        pts = [{x:0, y:0}, {x:a, y:0}, {x:shift + c, y:h}, {x:shift, y:h}];
+                    } else {
+                        // Если не выходит, строим как прямоугольную трапецию (с прямым углом)
+                        warnBox.style.display = 'block';
+                        // Используем тот же алгоритм, что выше
+                        const dist = Math.hypot(a, b);
+                        const p_semi = (dist + c + d) / 2;
+                        const area = Math.sqrt(Math.max(0, p_semi * (p_semi - dist) * (p_semi - c) * (p_semi - d)));
+                        const h_dist = (2 * area) / dist;
+                        const proj_dist = (c*c - d*d + dist*dist) / (2 * dist);
+                        const vx = a / dist, vy = -b / dist;
+                        const px = proj_dist * vx, py = b + proj_dist * vy;
+                        const nx = -vy, ny = vx;
+                        const x1 = px + h_dist * nx, y1 = py + h_dist * ny;
+                        const x2 = px - h_dist * nx, y2 = py - h_dist * ny;
+                        const x = y1 > y2 ? x1 : x2;
+                        const y = y1 > y2 ? y1 : y2;
+                        pts = [{x:0, y:0}, {x:a, y:0}, {x:x, y:y}, {x:0, y:b}];
+                    }
+                    sideNames = ['А (Низ)', 'Г (Право)', 'В (Верх)', 'Б (Лево)'];
                 }
-                sideNames = ['А (Низ)', 'Г (Право)', 'В (Верх)', 'Б (Лево)']; 
-                // Внимание: порядок имен для отрисовки (обход по часовой)
-                // Если pts идут: (0,0) -> (a,0) -> (x,y) -> (0,b)
-                // То стороны: (0,0)-(a,0) это А, (a,0)-(x,y) это Г, (x,y)-(0,b) это В, (0,b)-(0,0) это Б
             }
 
             if (pts.length < 3) return;
@@ -209,7 +269,7 @@
             const shiftY = (minY + maxY) / 2;
             pts.forEach(p => { p.x -= shiftX; p.y -= shiftY; });
 
-            // Смещение (рамка)
+            // Смещение внутрь
             const framePts = getOffsetPolygon(pts, OFFSET);
 
             // Отрисовка
@@ -277,7 +337,7 @@
                 return `<polygon points="${pointsStr}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${dash ? 'stroke-dasharray="4,4"' : ''} />`;
             };
 
-            // Рисуем стекло (синее) и рамку (красный пунктир)
+            // Стекло (синее) и рамка (красный пунктир)
             svg.innerHTML += createPoly(glassPts, '#007AFF', 'rgba(0, 122, 255, 0.05)', false);
             svg.innerHTML += createPoly(framePts, '#FF3B30', 'none', true);
 
@@ -294,7 +354,7 @@
                 const glassLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
                 const sawSetting = frameLen + 22; // Размер для пилы
 
-                // Отрисовка подписей на чертеже
+                // Подписи сторон
                 const midX = (p1.x + p2.x) / 2;
                 const midY = (p1.y + p2.y) / 2;
                 
