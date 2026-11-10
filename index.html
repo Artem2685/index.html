@@ -2,150 +2,304 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Калькулятор дистанционной рамки</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { padding: 8px; width: 100px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        canvas { border: 1px solid #ccc; margin-top: 20px; background: #fff; display: block; }
-        .results { margin-top: 15px; font-size: 18px; font-weight: bold; color: #333; }
-        .highlight { color: #d9534f; }
+        :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sec: #8E8E93; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
+        .container { max-width: 700px; margin: 0 auto; }
+        
+        /* Вкладки фигур */
+        .shape-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.85em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); }
+        .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
+        
+        /* Графика */
+        .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; }
+        svg { width: 100%; height: 100%; overflow: visible; }
+
+        /* Поля ввода */
+        .input-card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-weight: 600; font-size: 0.85em; margin-bottom: 5px; color: var(--sec); }
+        .input-group input { padding: 12px; border: 2px solid #E5E5EA; border-radius: 10px; font-size: 1.1em; font-weight: 600; text-align: center; background: #F9F9F9; }
+        .input-group input:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        /* Результаты */
+        .results-card { background: var(--card); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; }
+        .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; text-align: center; }
+        th { color: var(--sec); font-weight: 600; text-transform: uppercase; font-size: 0.75em; padding: 8px 4px; border-bottom: 2px solid #E5E5EA; }
+        td { padding: 12px 4px; border-bottom: 1px solid #E5E5EA; font-weight: 600; }
+        .td-name { text-align: left; font-weight: bold; color: var(--sec); font-size: 1.1em; }
+        .td-frame { font-size: 1.2em; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Кнопки выбора фигуры -->
+        <div class="shape-tabs">
+            <div class="shape-btn active" onclick="setShape('iso_tri', this)">Равнобедр. треугольник</div>
+            <div class="shape-btn" onclick="setShape('scalene_tri', this)">Произвольный треугольник</div>
+            <div class="shape-btn" onclick="setShape('right_trap', this)">Прямоугольная трапеция</div>
+            <div class="shape-btn" onclick="setShape('pentagon', this)">Пятиугольник (Домик)</div>
+        </div>
 
-<div class="container">
-    <h2>Расчет равнобедренного треугольника</h2>
-    
-    <div class="input-group">
-        <label>Ширина основания (мм):</label>
-        <input type="number" id="inputBase" value="750">
+        <div class="canvas-container">
+            <svg id="drawingArea" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <div class="input-card" id="inputFields"></div>
+
+        <div class="results-card">
+            <div class="results-title">Размеры реек для отрезки</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Сторона</th>
+                        <th>Длина стекла</th>
+                        <th>Рамка (резать)</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
     </div>
-    <div class="input-group">
-        <label>Высота (мм):</label>
-        <input type="number" id="inputHeight" value="637">
-    </div>
-    <div class="input-group">
-        <label>Глубина рамки (D) (мм):</label>
-        <input type="number" id="inputOffset" value="11">
-    </div>
-    
-    <button onclick="calculateAndDraw()">Рассчитать и нарисовать</button>
 
-    <div class="results" id="results"></div>
-    
-    <!-- Холст для рисования -->
-    <canvas id="myCanvas" width="600" height="500"></canvas>
-</div>
+    <script>
+        let currentShape = 'iso_tri';
+        const OFFSET = 11; // Глубина герметизации (11 мм с каждой стороны)
 
-<script>
-    function calculateAndDraw() {
-        // 1. Получаем значения из полей ввода
-        const base = parseFloat(document.getElementById('inputBase').value);
-        const height = parseFloat(document.getElementById('inputHeight').value);
-        const offset = parseFloat(document.getElementById('inputOffset').value);
-
-        // 2. Математический расчет
-        // Угол при основании
-        const alpha = Math.atan(height / (base / 2)); 
-        // Длина боковой стороны исходного треугольника
-        const sideLength = Math.sqrt(Math.pow(base / 2, 2) + Math.pow(height, 2));
-
-        // Формулы для расчета длин сторон внутренней рамки
-        // Основание уменьшается с двух сторон
-        const cutBase = base - 2 * offset * (base / 2) / height; 
-        
-        // Боковые стороны уменьшаются с учетом углов
-        const cutSide = sideLength - offset * ( (base / 2) / height + height / (base / 2) );
-
-        // Выводим результат текстом
-        document.getElementById('results').innerHTML = 
-            `Длина низа: <span class="highlight">${cutBase.toFixed(1)} мм</span><br>` +
-            `Длина боков: <span class="highlight">${cutSide.toFixed(1)} мм</span>`;
-
-        // 3. Отрисовка на Canvas (графика)
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Очищаем холст перед новой отрисовкой
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Настройка масштаба, чтобы фигура влезла в холст
-        const padding = 50;
-        const scaleX = (canvas.width - padding * 2) / base;
-        const scaleY = (canvas.height - padding * 2) / height;
-        const scale = Math.min(scaleX, scaleY); // Берем меньший масштаб для сохранения пропорций
-
-        // Центрирование по горизонтали и прижатие к низу
-        const startX = (canvas.width - base * scale) / 2;
-        const startY = canvas.height - padding;
-
-        // Функция перевода координат в экранные
-        function pt(x, y) {
-            return { x: startX + x * scale, y: startY - y * scale };
+        function setShape(shape, btn) {
+            currentShape = shape;
+            document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderInputs();
+            calculateAndDraw();
         }
 
-        // Координаты исходного стекла
-        const p1 = pt(0, 0);          // Левый нижний угол
-        const p2 = pt(base, 0);       // Правый нижний угол
-        const p3 = pt(base / 2, height); // Верхний угол
+        function renderInputs() {
+            const container = document.getElementById('inputFields');
+            let html = '';
 
-        // Координаты внутренней рамки (смещенные внутрь)
-        const p1_in = pt(offset * (base / 2) / height, offset);
-        const p2_in = pt(base - offset * (base / 2) / height, offset);
-        const p3_in = pt(base / 2, height - offset * (height / (base/2) + (base/2)/height) / 2); // Примерное смещение вершины
+            if (currentShape === 'iso_tri') {
+                html = `
+                    <div class="input-grid">
+                        <div class="input-group"><label>Ширина низа (мм)</label><input type="number" id="val_w" value="750" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Высота (мм)</label><input type="number" id="val_h" value="637" oninput="calculateAndDraw()"></div>
+                    </div>`;
+            } else if (currentShape === 'scalene_tri') {
+                html = `
+                    <div class="input-grid">
+                        <div class="input-group"><label>Сторона А (низ)</label><input type="number" id="val_a" value="750" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Сторона Б (лево)</label><input type="number" id="val_b" value="637" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Сторона В (право)</label><input type="number" id="val_c" value="700" oninput="calculateAndDraw()"></div>
+                    </div>`;
+            } else if (currentShape === 'right_trap') {
+                html = `
+                    <div class="input-grid">
+                        <div class="input-group"><label>Нижнее основание (мм)</label><input type="number" id="val_w" value="660" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Левая сторона (мм)</label><input type="number" id="val_l" value="850" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Правая сторона (мм)</label><input type="number" id="val_r" value="1140" oninput="calculateAndDraw()"></div>
+                    </div>`;
+            } else if (currentShape === 'pentagon') {
+                html = `
+                    <div class="input-grid">
+                        <div class="input-group"><label>Ширина (мм)</label><input type="number" id="val_w" value="1562" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Высота левая (мм)</label><input type="number" id="val_h_l" value="241" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Высота правая (мм)</label><input type="number" id="val_h_r" value="241" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Высота пика (мм)</label><input type="number" id="val_h_p" value="682" oninput="calculateAndDraw()"></div>
+                    </div>`;
+            }
+            container.innerHTML = html;
+        }
 
-        // --- Рисуем исходное стекло (серым) ---
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.lineTo(p3.x, p3.y);
-        ctx.closePath();
-        ctx.strokeStyle = '#ccc';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Универсальная функция расчета смещения контура внутрь
+        function offsetPolygon(pts, offset) {
+            const result = [];
+            const n = pts.length;
+            for (let i = 0; i < n; i++) {
+                const p0 = pts[(i - 1 + n) % n]; // Предыдущая точка
+                const p1 = pts[i];               // Текущая
+                const p2 = pts[(i + 1) % n];     // Следующая
 
-        // --- Рисуем рамку (красным) ---
-        ctx.beginPath();
-        ctx.moveTo(p1_in.x, p1_in.y);
-        ctx.lineTo(p2_in.x, p2_in.y);
-        ctx.lineTo(p3_in.x, p3_in.y);
-        ctx.closePath();
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+                // Векторы направлений от текущей точки
+                const v1 = { x: p0.x - p1.x, y: p0.y - p1.y };
+                const v2 = { x: p2.x - p1.x, y: p2.y - p1.y };
 
-        // --- Добавляем подписи ---
-        ctx.fillStyle = 'black';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
+                const len1 = Math.hypot(v1.x, v1.y);
+                const len2 = Math.hypot(v2.x, v2.y);
 
-        // Подпись низа
-        ctx.fillText(cutBase.toFixed(1) + ' мм', (p1_in.x + p2_in.x) / 2, p1_in.y + 25);
-        
-        // Подпись левого бока
-        ctx.save();
-        ctx.translate((p1_in.x + p3_in.x) / 2 - 20, (p1_in.y + p3_in.y) / 2);
-        ctx.rotate(-Math.atan2(p3_in.y - p1_in.y, p3_in.x - p1_in.x));
-        ctx.fillText(cutSide.toFixed(1) + ' мм', 0, -10);
-        ctx.restore();
+                const u1 = { x: v1.x / len1, y: v1.y / len1 };
+                const u2 = { x: v2.x / len2, y: v2.y / len2 };
 
-        // Подпись правого бока
-        ctx.save();
-        ctx.translate((p2_in.x + p3_in.x) / 2 + 20, (p2_in.y + p3_in.y) / 2);
-        ctx.rotate(Math.atan2(p3_in.y - p2_in.y, p2_in.x - p3_in.x));
-        ctx.fillText(cutSide.toFixed(1) + ' мм', 0, -10);
-        ctx.restore();
-    }
+                // Угол между сторонами
+                const dot = u1.x * u2.x + u1.y * u2.y;
+                const clampedDot = Math.max(-1, Math.min(1, dot));
+                const angle = Math.acos(clampedDot);
 
-    // Запускаем расчет при загрузке страницы
-    window.onload = calculateAndDraw;
-</script>
+                // Расстояние от вершины до новой вершины рамки
+                // Если угол прямой (90 градусов), sin(45) = 0.707. Смещение = 11 / 0.707 = 15.5 мм
+                const dist = offset / Math.sin(angle / 2);
+                
+                // Биссектриса угла (направление внутрь)
+                let bisector = { x: u1.x + u2.x, y: u1.y + u2.y };
+                const blen = Math.hypot(bisector.x, bisector.y);
+                
+                if (blen > 0.0001) {
+                    bisector.x /= blen;
+                    bisector.y /= blen;
+                } else {
+                    bisector = { x: -u1.y, y: u1.x }; // Защита от деления на ноль
+                }
 
+                result.push({
+                    x: p1.x + bisector.x * dist,
+                    y: p1.y + bisector.y * dist
+                });
+            }
+            return result;
+        }
+
+        function calculateAndDraw() {
+            let pts = [];
+            let labels = [];
+
+            // 1. Формируем координаты фигур (Y идет вниз)
+            if (currentShape === 'iso_tri') {
+                const w = parseFloat(document.getElementById('val_w').value) || 0;
+                const h = parseFloat(document.getElementById('val_h').value) || 0;
+                if (w <= 0 || h <= 0) return;
+                pts = [{x:0, y:h}, {x:w, y:h}, {x:w/2, y:0}];
+                labels = ['Низ', 'Право', 'Лево'];
+            } 
+            else if (currentShape === 'scalene_tri') {
+                const a = parseFloat(document.getElementById('val_a').value) || 0;
+                const b = parseFloat(document.getElementById('val_b').value) || 0;
+                const c = parseFloat(document.getElementById('val_c').value) || 0;
+                // Находим координаты через теорему косинусов для отрисовки
+                if (a <= 0 || b <= 0 || c <= 0 || a+b<=c || a+c<=b || b+c<=a) return;
+                const x_c = (b*b + a*a - c*c) / (2*a);
+                const y_c = Math.sqrt(Math.max(0, b*b - x_c*x_c));
+                pts = [{x:0, y:0}, {x:a, y:0}, {x:x_c, y:y_c}]; 
+                // Переворачиваем Y для отрисовки
+                pts = pts.map(p => ({x: p.x, y: Math.max(p.y, 100) - p.y})); 
+                labels = ['Низ (А)', 'Право (В)', 'Лево (Б)'];
+            }
+            else if (currentShape === 'right_trap') {
+                const w = parseFloat(document.getElementById('val_w').value) || 0;
+                const l = parseFloat(document.getElementById('val_l').value) || 0;
+                const r = parseFloat(document.getElementById('val_r').value) || 0;
+                if (w <= 0 || l <= 0 || r <= 0) return;
+                pts = [{x:0, y:l}, {x:w, y:r}, {x:w, y:0}, {x:0, y:0}];
+                labels = ['Лево', 'Право', 'Верх', 'Низ'];
+            }
+            else if (currentShape === 'pentagon') {
+                const w = parseFloat(document.getElementById('val_w').value) || 0;
+                const hl = parseFloat(document.getElementById('val_h_l').value) || 0;
+                const hr = parseFloat(document.getElementById('val_h_r').value) || 0;
+                const hp = parseFloat(document.getElementById('val_h_p').value) || 0;
+                if (w <= 0 || hl <= 0 || hr <= 0 || hp <= 0) return;
+                pts = [{x:0, y:hl}, {x:w/2, y:0}, {x:w, y:hr}, {x:w, y:hr}, {x:w, y:0}, {x:0, y:0}];
+                // Упростим до 5 точек: лево-верх, пик, право-верх, право-низ, лево-низ
+                pts = [{x:0, y:hl}, {x:w/2, y:0}, {x:w, y:hr}, {x:w, y:hr}, {x:0, y:0}]; 
+                pts = [{x:0, y:0}, {x:0, y:hl}, {x:w/2, y:0}, {x:w, y:hr}, {x:w, y:0}]; // Переупорядочил для правильного обхода
+                // На самом деле, для дома: (0, hl), (w/2, 0), (w, hr), (w, hr_max), (0, hl_max)
+                const max_h = Math.max(hl, hr);
+                pts = [{x:0, y:max_h-hl}, {x:w/2, y:max_h-hp}, {x:w, y:max_h-hr}, {x:w, y:max_h}, {x:0, y:max_h}];
+                labels = ['Лево', 'Скат 1', 'Право', 'Низ', 'Скат 2'];
+            }
+
+            if (pts.length < 3) return;
+
+            // 2. Математический расчет рамки
+            const framePts = offsetPolygon(pts, OFFSET);
+
+            // 3. Расчет длин сторон
+            const glassSides = [];
+            const frameSides = [];
+            const n = pts.length;
+            for (let i = 0; i < n; i++) {
+                const p1 = pts[i], p2 = pts[(i + 1) % n];
+                const f1 = framePts[i], f2 = framePts[(i + 1) % n];
+                glassSides.push(Math.hypot(p2.x - p1.x, p2.y - p1.y));
+                frameSides.push(Math.hypot(f2.x - f1.x, f2.y - f1.y));
+            }
+
+            drawSVG(pts, framePts, glassSides, frameSides, labels);
+        }
+
+        function drawSVG(glassPts, framePts, glassLens, frameLens, labels) {
+            const svg = document.getElementById('drawingArea');
+            svg.innerHTML = ''; 
+
+            const minX = Math.min(...glassPts.map(p => p.x));
+            const maxX = Math.max(...glassPts.map(p => p.x));
+            const minY = Math.min(...glassPts.map(p => p.y));
+            const maxY = Math.max(...glassPts.map(p => p.y));
+            
+            const w = maxX - minX || 10;
+            const h = maxY - minY || 10;
+            const padding = 60; 
+            
+            svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
+            
+            // Рисуем стекло (голубая заливка, синий контур)
+            let glassPath = glassPts.map(p => `${p.x},${p.y}`).join(' ');
+            svg.innerHTML += `<polygon points="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" stroke-linejoin="round" />`;
+
+            // Рисуем рамку (красная линия)
+            let framePath = framePts.map(p => `${p.x},${p.y}`).join(' ');
+            svg.innerHTML += `<polygon points="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" stroke-linejoin="round" />`;
+
+            // Подписи и таблица
+            let tableHTML = '';
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+
+            for (let i = 0; i < glassPts.length; i++) {
+                const p1 = glassPts[i], p2 = glassPts[(i + 1) % glassPts.length];
+                const f1 = framePts[i], f2 = framePts[(i + 1) % framePts.length];
+
+                // Центр стороны рамки для подписи
+                const midX = (f1.x + f2.x) / 2;
+                const midY = (f1.y + f2.y) / 2;
+                
+                // Вектор нормали для смещения текста наружу
+                let dx = p2.x - p1.x, dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                let nx = dy / len, ny = -dx / len;
+                
+                // Проверяем, что нормаль смотрит наружу от центра
+                if ((midX - centerX) * nx + (midY - centerY) * ny < 0) {
+                    nx = -nx; ny = -ny;
+                }
+                
+                const textX = midX + nx * 25;
+                const textY = midY + ny * 25;
+
+                // Выводим текст на графике
+                svg.innerHTML += `
+                    <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="14" font-weight="bold" fill="#1C1C1E">${labels[i]}</text>
+                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${frameLens[i].toFixed(1)}</text>
+                `;
+
+                // Строка в таблице
+                tableHTML += `
+                    <tr>
+                        <td class="td-name">${labels[i]}</td>
+                        <td>${glassLens[i].toFixed(1)}</td>
+                        <td class="td-frame">${frameLens[i].toFixed(1)}</td>
+                    </tr>
+                `;
+            }
+            document.getElementById('resultsBody').innerHTML = tableHTML;
+        }
+
+        // Инициализация при запуске
+        renderInputs();
+        calculateAndDraw();
+    </script>
 </body>
 </html>
