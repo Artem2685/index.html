@@ -1,24 +1,151 @@
-function calculateIsoscelesTriangle(base, height, offset) {
-    // 1. Координаты исходного треугольника
-    const x1 = 0, y1 = 0;
-    const x2 = base, y2 = 0;
-    const x3 = base / 2, y3 = height;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор дистанционной рамки</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { padding: 8px; width: 100px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        canvas { border: 1px solid #ccc; margin-top: 20px; background: #fff; display: block; }
+        .results { margin-top: 15px; font-size: 18px; font-weight: bold; color: #333; }
+        .highlight { color: #d9534f; }
+    </style>
+</head>
+<body>
 
-    // 2. Смещение сторон внутрь на offset (11 мм)
-    // (Здесь используется упрощенная логика для примера, 
-    // в реальном приложении нужно реализовать полноценный алгоритм смещения линий)
-    const newBase = base - 2 * offset * (base / (2 * height)); // Примерная формула
-    const newSide = Math.sqrt(Math.pow(newBase / 2, 2) + Math.pow(height - offset, 2));
+<div class="container">
+    <h2>Расчет равнобедренного треугольника</h2>
+    
+    <div class="input-group">
+        <label>Ширина основания (мм):</label>
+        <input type="number" id="inputBase" value="750">
+    </div>
+    <div class="input-group">
+        <label>Высота (мм):</label>
+        <input type="number" id="inputHeight" value="637">
+    </div>
+    <div class="input-group">
+        <label>Глубина рамки (D) (мм):</label>
+        <input type="number" id="inputOffset" value="11">
+    </div>
+    
+    <button onclick="calculateAndDraw()">Рассчитать и нарисовать</button>
 
-    // 3. Возвращаем длины для отрисовки и вывода
-    return {
-        bottom: newBase.toFixed(1),
-        left: newSide.toFixed(1),
-        right: newSide.toFixed(1)
-    };
-}
+    <div class="results" id="results"></div>
+    
+    <!-- Холст для рисования -->
+    <canvas id="myCanvas" width="600" height="500"></canvas>
+</div>
 
-// Пример вызова
-const result = calculateIsoscelesTriangle(750, 637, 11);
-console.log("Низ:", result.bottom, "Бок:", result.left); 
-// Выведет примерно: Низ: 737.0 Бок: 727.0
+<script>
+    function calculateAndDraw() {
+        // 1. Получаем значения из полей ввода
+        const base = parseFloat(document.getElementById('inputBase').value);
+        const height = parseFloat(document.getElementById('inputHeight').value);
+        const offset = parseFloat(document.getElementById('inputOffset').value);
+
+        // 2. Математический расчет
+        // Угол при основании
+        const alpha = Math.atan(height / (base / 2)); 
+        // Длина боковой стороны исходного треугольника
+        const sideLength = Math.sqrt(Math.pow(base / 2, 2) + Math.pow(height, 2));
+
+        // Формулы для расчета длин сторон внутренней рамки
+        // Основание уменьшается с двух сторон
+        const cutBase = base - 2 * offset * (base / 2) / height; 
+        
+        // Боковые стороны уменьшаются с учетом углов
+        const cutSide = sideLength - offset * ( (base / 2) / height + height / (base / 2) );
+
+        // Выводим результат текстом
+        document.getElementById('results').innerHTML = 
+            `Длина низа: <span class="highlight">${cutBase.toFixed(1)} мм</span><br>` +
+            `Длина боков: <span class="highlight">${cutSide.toFixed(1)} мм</span>`;
+
+        // 3. Отрисовка на Canvas (графика)
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Очищаем холст перед новой отрисовкой
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Настройка масштаба, чтобы фигура влезла в холст
+        const padding = 50;
+        const scaleX = (canvas.width - padding * 2) / base;
+        const scaleY = (canvas.height - padding * 2) / height;
+        const scale = Math.min(scaleX, scaleY); // Берем меньший масштаб для сохранения пропорций
+
+        // Центрирование по горизонтали и прижатие к низу
+        const startX = (canvas.width - base * scale) / 2;
+        const startY = canvas.height - padding;
+
+        // Функция перевода координат в экранные
+        function pt(x, y) {
+            return { x: startX + x * scale, y: startY - y * scale };
+        }
+
+        // Координаты исходного стекла
+        const p1 = pt(0, 0);          // Левый нижний угол
+        const p2 = pt(base, 0);       // Правый нижний угол
+        const p3 = pt(base / 2, height); // Верхний угол
+
+        // Координаты внутренней рамки (смещенные внутрь)
+        const p1_in = pt(offset * (base / 2) / height, offset);
+        const p2_in = pt(base - offset * (base / 2) / height, offset);
+        const p3_in = pt(base / 2, height - offset * (height / (base/2) + (base/2)/height) / 2); // Примерное смещение вершины
+
+        // --- Рисуем исходное стекло (серым) ---
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.closePath();
+        ctx.strokeStyle = '#ccc';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // --- Рисуем рамку (красным) ---
+        ctx.beginPath();
+        ctx.moveTo(p1_in.x, p1_in.y);
+        ctx.lineTo(p2_in.x, p2_in.y);
+        ctx.lineTo(p3_in.x, p3_in.y);
+        ctx.closePath();
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // --- Добавляем подписи ---
+        ctx.fillStyle = 'black';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+
+        // Подпись низа
+        ctx.fillText(cutBase.toFixed(1) + ' мм', (p1_in.x + p2_in.x) / 2, p1_in.y + 25);
+        
+        // Подпись левого бока
+        ctx.save();
+        ctx.translate((p1_in.x + p3_in.x) / 2 - 20, (p1_in.y + p3_in.y) / 2);
+        ctx.rotate(-Math.atan2(p3_in.y - p1_in.y, p3_in.x - p1_in.x));
+        ctx.fillText(cutSide.toFixed(1) + ' мм', 0, -10);
+        ctx.restore();
+
+        // Подпись правого бока
+        ctx.save();
+        ctx.translate((p2_in.x + p3_in.x) / 2 + 20, (p2_in.y + p3_in.y) / 2);
+        ctx.rotate(Math.atan2(p3_in.y - p2_in.y, p2_in.x - p3_in.x));
+        ctx.fillText(cutSide.toFixed(1) + ' мм', 0, -10);
+        ctx.restore();
+    }
+
+    // Запускаем расчет при загрузке страницы
+    window.onload = calculateAndDraw;
+</script>
+
+</body>
+</html>
