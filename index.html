@@ -9,16 +9,13 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
         .container { max-width: 700px; margin: 0 auto; }
         
-        /* Вкладки фигур */
         .shape-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.85em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); transition: all 0.2s; }
+        .shape-btn { padding: 12px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.85em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
-        /* Графика */
         .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; }
         svg { width: 100%; height: 100%; overflow: visible; }
 
-        /* Поля ввода */
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .input-group { display: flex; flex-direction: column; }
@@ -26,7 +23,6 @@
         .input-group input { padding: 12px; border: 2px solid #E5E5EA; border-radius: 10px; font-size: 1.1em; font-weight: 600; text-align: center; background: #F9F9F9; color: var(--text); }
         .input-group input:focus { outline: none; border-color: var(--primary); background: #fff; }
 
-        /* Таблица */
         .results-card { background: var(--card); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; }
         .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; text-align: center; }
@@ -43,7 +39,7 @@
             <div class="shape-btn active" onclick="setShape('trap', this)">Трапеция</div>
             <div class="shape-btn" onclick="setShape('iso_tri', this)">Равнобедр. треуг.</div>
             <div class="shape-btn" onclick="setShape('scalene_tri', this)">Произвольный треуг.</div>
-            <div class="shape-btn" onclick="setShape('penta', this)">5-угольник</div>
+            <div class="shape-btn" onclick="setShape('penta', this)">5-угольник (Домик)</div>
         </div>
 
         <div class="canvas-container">
@@ -69,7 +65,7 @@
 
     <script>
         let currentShape = 'trap';
-        const OFFSET = 10; // Отступ 10 мм
+        const OFFSET = 10; // Отступ 10 мм (как ты сказал)
         const TAPE = 20;   // Рулетка с 2 см
 
         function setShape(shape, btn) {
@@ -115,13 +111,12 @@
             calculateAndDraw();
         }
 
-        // Функция для точного геометрического смещения многоугольника внутрь на 10 мм
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Теперь смещает строго ВНУТРЬ фигуры
         function offsetPolygon(pts, offset) {
             const n = pts.length;
             const innerPts = [];
-            
-            // 1. Смещаем каждую линию
             const lines = [];
+            
             for (let i = 0; i < n; i++) {
                 const p1 = pts[i];
                 const p2 = pts[(i + 1) % n];
@@ -130,9 +125,9 @@
                 let dy = p2.y - p1.y;
                 const len = Math.hypot(dx, dy);
                 
-                // Вектор нормали, направленный внутрь (зависит от обхода, у нас обход по часовой)
-                let nx = dy / len;
-                let ny = -dx / len;
+                // ИСПРАВЛЕНИЕ: Вектор нормали теперь направлен ВНУТРЬ (nx = -dy, ny = dx)
+                let nx = -dy / len;
+                let ny = dx / len;
                 
                 lines.push({
                     x1: p1.x + nx * offset,
@@ -142,12 +137,10 @@
                 });
             }
 
-            // 2. Находим точки пересечения смещенных линий
             for (let i = 0; i < n; i++) {
-                const l1 = lines[(i - 1 + n) % n]; // Предыдущая линия
-                const l2 = lines[i];               // Текущая линия
+                const l1 = lines[(i - 1 + n) % n]; 
+                const l2 = lines[i];               
                 
-                // Формула пересечения двух прямых
                 const A1 = l1.y2 - l1.y1;
                 const B1 = l1.x1 - l1.x2;
                 const C1 = A1 * l1.x1 + B1 * l1.y1;
@@ -163,7 +156,6 @@
                         y: (A1 * C2 - A2 * C1) / det
                     });
                 } else {
-                    // Если линии параллельны, берем просто точку со смещением
                     innerPts.push({x: l2.x1, y: l2.y1}); 
                 }
             }
@@ -208,7 +200,7 @@
             const sawLens = [];
 
             if (currentShape.includes('tri')) {
-                // Для треугольников используем проверенную формулу с тангенсами
+                // Для треугольников — точная формула (11 мм срезается углами)
                 const angles = [];
                 for (let i = 0; i < n; i++) {
                     const p0 = pts[(i - 1 + n) % n];
@@ -234,11 +226,11 @@
                     const tan2 = Math.tan(angles[(i + 1) % n] / 2);
                     
                     const sawL = L - 11 * (tan1 + tan2);
-                    realLens.push(sawL); // Внутренняя длина
-                    sawLens.push(sawL);  // На пиле выставляем то же самое
+                    realLens.push(sawL); 
+                    sawLens.push(sawL);  
                 }
             } else {
-                // Для трапеций и 5-угольников используем геометрическое смещение на 10мм
+                // Для трапеций и 5-угольников — геометрический отступ 10 мм + 20 мм рулетка
                 const innerPts = offsetPolygon(pts, OFFSET);
                 
                 for (let i = 0; i < n; i++) {
@@ -247,7 +239,7 @@
                     const L_inner = Math.hypot(p2.x - p1.x, p2.y - p1.y);
                     
                     realLens.push(L_inner);
-                    sawLens.push(L_inner + TAPE); // Прибавляем 20 мм для пилы
+                    sawLens.push(L_inner + TAPE); 
                 }
             }
 
@@ -258,7 +250,7 @@
             const svg = document.getElementById('drawingArea');
             svg.innerHTML = ''; 
 
-            const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); // Переворот Y для SVG
+            const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); 
             const innerPts = offsetPolygon(glassPts, OFFSET).map(p => ({x: p.x, y: -p.y}));
 
             const minX = Math.min(...svgGlassPts.map(p => p.x));
@@ -272,11 +264,9 @@
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
-            // Внешнее стекло
             let glassPath = svgGlassPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" stroke-linejoin="round" />`;
 
-            // Внутренний контур
             let framePath = innerPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" stroke-linejoin="round" />`;
 
