@@ -36,9 +36,9 @@
 <body>
     <div class="container">
         <div class="shape-tabs">
-            <div class="shape-btn active" onclick="setShape('trap', this)">Трапеция</div>
-            <div class="shape-btn" onclick="setShape('iso_tri', this)">Равнобедр. треуг.</div>
+            <div class="shape-btn active" onclick="setShape('iso_tri', this)">Равнобедр. треуг.</div>
             <div class="shape-btn" onclick="setShape('scalene_tri', this)">Произвольный треуг.</div>
+            <div class="shape-btn" onclick="setShape('trap', this)">Трапеция</div>
             <div class="shape-btn" onclick="setShape('penta', this)">5-угольник (Домик)</div>
         </div>
 
@@ -54,8 +54,8 @@
                 <thead>
                     <tr>
                         <th>Сторона</th>
-                        <th>По рулетке (мм)</th>
-                        <th>На пиле (мм)</th>
+                        <th>Длина по рулетке (мм)</th>
+                        <th>Выставить на пиле (мм)</th>
                     </tr>
                 </thead>
                 <tbody id="resultsBody"></tbody>
@@ -64,9 +64,9 @@
     </div>
 
     <script>
-        let currentShape = 'trap';
-        const OFFSET = 10; // Отступ 10 мм (как ты сказал)
-        const TAPE = 20;   // Рулетка с 2 см
+        let currentShape = 'iso_tri';
+        const OFFSET = 10; // Отступ ровно 10 мм внутрь
+        const TAPE = 20;   // Начинаем мерить с 2 см
 
         function setShape(shape, btn) {
             currentShape = shape;
@@ -79,14 +79,7 @@
             const container = document.getElementById('inputFields');
             let html = '';
 
-            if (currentShape === 'trap') {
-                html = `
-                    <div class="input-grid">
-                        <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Левая сторона, мм</label><input type="number" id="val_l" value="397" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Правая сторона, мм</label><input type="number" id="val_r" value="203" oninput="calculateAndDraw()"></div>
-                    </div>`;
-            } else if (currentShape === 'iso_tri') {
+            if (currentShape === 'iso_tri') {
                 html = `
                     <div class="input-grid">
                         <div class="input-group"><label>Ширина низа, мм</label><input type="number" id="val_w" value="750" oninput="calculateAndDraw()"></div>
@@ -98,6 +91,13 @@
                         <div class="input-group"><label>Ширина низа, мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Высота, мм</label><input type="number" id="val_h" value="226" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Сдвиг вершины (мм)</label><input type="number" id="val_x" value="151" oninput="calculateAndDraw()"></div>
+                    </div>`;
+            } else if (currentShape === 'trap') {
+                html = `
+                    <div class="input-grid">
+                        <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Левая сторона, мм</label><input type="number" id="val_l" value="397" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Правая сторона, мм</label><input type="number" id="val_r" value="203" oninput="calculateAndDraw()"></div>
                     </div>`;
             } else if (currentShape === 'penta') {
                 html = `
@@ -111,24 +111,24 @@
             calculateAndDraw();
         }
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Теперь смещает строго ВНУТРЬ фигуры
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Теперь она строит линии строго ВНУТРЬ фигуры
         function offsetPolygon(pts, offset) {
             const n = pts.length;
             const innerPts = [];
             const lines = [];
-            
+
+            // 1. Смещаем каждую линию внутрь на offset
             for (let i = 0; i < n; i++) {
                 const p1 = pts[i];
                 const p2 = pts[(i + 1) % n];
-                
-                let dx = p2.x - p1.x;
-                let dy = p2.y - p1.y;
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
                 const len = Math.hypot(dx, dy);
                 
-                // ИСПРАВЛЕНИЕ: Вектор нормали теперь направлен ВНУТРЬ (nx = -dy, ny = dx)
-                let nx = -dy / len;
-                let ny = dx / len;
-                
+                // Вектор нормали, направленный ВНУТРЬ (для обхода по часовой стрелке)
+                const nx = -dy / len;
+                const ny = dx / len;
+
                 lines.push({
                     x1: p1.x + nx * offset,
                     y1: p1.y + ny * offset,
@@ -137,10 +137,11 @@
                 });
             }
 
+            // 2. Находим точки пересечения смещенных линий (это и есть углы)
             for (let i = 0; i < n; i++) {
                 const l1 = lines[(i - 1 + n) % n]; 
                 const l2 = lines[i];               
-                
+
                 const A1 = l1.y2 - l1.y1;
                 const B1 = l1.x1 - l1.x2;
                 const C1 = A1 * l1.x1 + B1 * l1.y1;
@@ -166,15 +167,8 @@
             let pts = [];
             let labels = [];
 
-            if (currentShape === 'trap') {
-                const w = parseFloat(document.getElementById('val_w').value) || 1;
-                const l = parseFloat(document.getElementById('val_l').value) || 1;
-                const r = parseFloat(document.getElementById('val_r').value) || 1;
-                // Прямоугольная трапеция (левый нижний угол - прямой)
-                pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:r}, {x:0, y:l}];
-                labels = ['Низ', 'Правая', 'Верхний скос', 'Левая'];
-            } 
-            else if (currentShape === 'iso_tri') {
+            // Строим фигуры (обход всегда по часовой стрелке)
+            if (currentShape === 'iso_tri') {
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const h = parseFloat(document.getElementById('val_h').value) || 1;
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:w/2, y:h}];
@@ -186,6 +180,13 @@
                 const x = parseFloat(document.getElementById('val_x').value) || 1;
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:x, y:h}];
                 labels = ['Низ', 'Правая', 'Левая'];
+            }
+            else if (currentShape === 'trap') {
+                const w = parseFloat(document.getElementById('val_w').value) || 1;
+                const l = parseFloat(document.getElementById('val_l').value) || 1;
+                const r = parseFloat(document.getElementById('val_r').value) || 1;
+                pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:r}, {x:0, y:l}];
+                labels = ['Низ', 'Правая', 'Верхний скос', 'Левая'];
             }
             else if (currentShape === 'penta') {
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
@@ -199,48 +200,17 @@
             const realLens = [];
             const sawLens = [];
 
-            if (currentShape.includes('tri')) {
-                // Для треугольников — точная формула (11 мм срезается углами)
-                const angles = [];
-                for (let i = 0; i < n; i++) {
-                    const p0 = pts[(i - 1 + n) % n];
-                    const p1 = pts[i];
-                    const p2 = pts[(i + 1) % n];
-                    const v1 = { x: p0.x - p1.x, y: p0.y - p1.y };
-                    const v2 = { x: p2.x - p1.x, y: p2.y - p1.y };
-                    const dot = v1.x * v2.x + v1.y * v2.y;
-                    const len1 = Math.hypot(v1.x, v1.y);
-                    const len2 = Math.hypot(v2.x, v2.y);
-                    let angle = Math.acos(Math.max(-1, Math.min(1, dot / (len1 * len2))));
-                    const cross = v1.x * v2.y - v1.y * v2.x;
-                    if (cross < 0) angle = 2 * Math.PI - angle;
-                    angles.push(angle);
-                }
+            // 1. Строим внутренний контур (на 10 мм внутрь)
+            const innerPts = offsetPolygon(pts, OFFSET);
 
-                for (let i = 0; i < n; i++) {
-                    const p1 = pts[i];
-                    const p2 = pts[(i + 1) % n];
-                    const L = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-                    
-                    const tan1 = Math.tan(angles[i] / 2);
-                    const tan2 = Math.tan(angles[(i + 1) % n] / 2);
-                    
-                    const sawL = L - 11 * (tan1 + tan2);
-                    realLens.push(sawL); 
-                    sawLens.push(sawL);  
-                }
-            } else {
-                // Для трапеций и 5-угольников — геометрический отступ 10 мм + 20 мм рулетка
-                const innerPts = offsetPolygon(pts, OFFSET);
+            // 2. Измеряем расстояния от угла до угла
+            for (let i = 0; i < n; i++) {
+                const p1 = innerPts[i];
+                const p2 = innerPts[(i + 1) % n];
+                const L_inner = Math.hypot(p2.x - p1.x, p2.y - p1.y);
                 
-                for (let i = 0; i < n; i++) {
-                    const p1 = innerPts[i];
-                    const p2 = innerPts[(i + 1) % n];
-                    const L_inner = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-                    
-                    realLens.push(L_inner);
-                    sawLens.push(L_inner + TAPE); 
-                }
+                realLens.push(L_inner);
+                sawLens.push(L_inner + TAPE); // Прибавляем 20 мм (рулетка с 2 см)
             }
 
             drawSVG(pts, realLens, sawLens, labels);
@@ -250,6 +220,7 @@
             const svg = document.getElementById('drawingArea');
             svg.innerHTML = ''; 
 
+            // Переворачиваем Y для SVG (в SVG Y идет вниз)
             const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); 
             const innerPts = offsetPolygon(glassPts, OFFSET).map(p => ({x: p.x, y: -p.y}));
 
@@ -264,9 +235,11 @@
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
+            // Рисуем стекло (голубым)
             let glassPath = svgGlassPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" stroke-linejoin="round" />`;
 
+            // Рисуем внутреннюю рамку (красным)
             let framePath = innerPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" stroke-linejoin="round" />`;
 
