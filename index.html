@@ -37,7 +37,6 @@
         <div class="shape-tabs">
             <div class="shape-btn active" onclick="setShape('trap', this)">Трапеция</div>
             <div class="shape-btn" onclick="setShape('iso_tri', this)">Равнобедр. треуг.</div>
-            <div class="shape-btn" onclick="setShape('scalene_tri', this)">Произвольный треуг.</div>
             <div class="shape-btn" onclick="setShape('penta', this)">5-угольник</div>
         </div>
 
@@ -48,12 +47,12 @@
         <div class="input-card" id="inputFields"></div>
 
         <div class="results-card">
-            <div class="results-title">Размеры для отрезки</div>
+            <div class="results-title">Размеры для отрезки (на пиле)</div>
             <table>
                 <thead>
                     <tr>
                         <th>Сторона</th>
-                        <th>На пиле (мм)</th>
+                        <th>Размер (мм)</th>
                     </tr>
                 </thead>
                 <tbody id="resultsBody"></tbody>
@@ -88,13 +87,6 @@
                         <div class="input-group"><label>Ширина низа, мм</label><input type="number" id="val_w" value="750" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Высота, мм</label><input type="number" id="val_h" value="637" oninput="calculateAndDraw()"></div>
                     </div>`;
-            } else if (currentShape === 'scalene_tri') {
-                html = `
-                    <div class="input-grid">
-                        <div class="input-group"><label>Ширина низа, мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Высота, мм</label><input type="number" id="val_h" value="226" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Сдвиг вершины (мм)</label><input type="number" id="val_x" value="151" oninput="calculateAndDraw()"></div>
-                    </div>`;
             } else if (currentShape === 'penta') {
                 html = `
                     <div class="input-grid">
@@ -117,22 +109,20 @@
                 const l = parseFloat(document.getElementById('val_l').value) || 1;
                 const r = parseFloat(document.getElementById('val_r').value) || 1;
                 
-                // Внешние координаты
+                // Внешние координаты (для отрисовки)
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:r}, {x:0, y:l}];
                 labels = ['Низ', 'Правая', 'Верхний скос', 'Левая'];
 
-                // Производственная логика для трапеции
+                // ТВОЯ ПРОИЗВОДСТВЕННАЯ ФОРМУЛА (которая дала 128, 907, 1007)
                 const slopeLen = Math.sqrt(w*w + Math.pow(r-l, 2));
-                const theta = Math.atan(Math.abs(r-l) / w); // Угол наклона
+                const theta = Math.atan(Math.abs(r-l) / w); 
 
                 let leftCut, rightCut;
 
                 if (r > l) {
-                    // Скос идет вверх направо. Левая - острая, Правая - тупая.
                     leftCut = l + 10 * Math.tan(theta / 2);
                     rightCut = r - (10 * Math.tan(theta) + 10);
                 } else {
-                    // Скос идет вниз направо. Левая - тупая, Правая - острая.
                     leftCut = l - (10 * Math.tan(theta) + 10);
                     rightCut = r + 10 * Math.tan(theta / 2);
                 }
@@ -145,6 +135,7 @@
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:w/2, y:h}];
                 labels = ['Низ', 'Правая', 'Левая'];
                 
+                // Формула для треугольника (737 и 727)
                 const side = Math.sqrt(Math.pow(w/2, 2) + h*h);
                 const angle = Math.atan(h / (w/2));
                 const cutSide = side - 11 * (Math.tan(angle/2) + Math.tan((Math.PI - 2*angle)/2));
@@ -152,14 +143,6 @@
                 
                 sawLens = [cutBase, cutSide, cutSide];
             } 
-            else if (currentShape === 'scalene_tri') {
-                const w = parseFloat(document.getElementById('val_w').value) || 1;
-                const h = parseFloat(document.getElementById('val_h').value) || 1;
-                const x = parseFloat(document.getElementById('val_x').value) || 1;
-                pts = [{x:0, y:0}, {x:w, y:0}, {x:x, y:h}];
-                labels = ['Низ', 'Правая', 'Левая'];
-                sawLens = [w, Math.sqrt(Math.pow(w-x,2)+h*h), Math.sqrt(x*x+h*h)];
-            }
             else if (currentShape === 'penta') {
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const hl = parseFloat(document.getElementById('val_hl').value) || 1;
@@ -176,7 +159,9 @@
             const svg = document.getElementById('drawingArea');
             svg.innerHTML = ''; 
 
+            // Переворачиваем Y для правильной отрисовки (в SVG Y идет вниз)
             const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); 
+
             const minX = Math.min(...svgGlassPts.map(p => p.x));
             const maxX = Math.max(...svgGlassPts.map(p => p.x));
             const minY = Math.min(...svgGlassPts.map(p => p.y));
@@ -188,28 +173,34 @@
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
+            // Рисуем стекло (синим контуром)
             let glassPath = svgGlassPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" stroke-linejoin="round" />`;
 
-            // Рисуем красную линию (просто для визуализации, геометрически сдвинутую)
-            const innerPts = glassPts.map((p, i) => {
-                const cx = (minX + maxX) / 2;
-                const cy = (minY + maxY) / 2;
-                const dx = p.x - cx;
-                const dy = p.y - cy;
-                const len = Math.hypot(dx, dy) || 1;
-                return {x: p.x - (dx/len)*10, y: p.y - (dy/len)*10};
-            }).map(p => ({x: p.x, y: -p.y}));
-            
-            let framePath = innerPts.map(p => `${p.x},${p.y}`).join(' ');
+            // --- ИСПРАВЛЕНИЕ ОТРИСОВКИ ---
+            // Чтобы рамка визуально не вылезала за края, мы сжимаем фигуру к ее центру.
+            // Это чисто визуальный эффект, на расчеты он не влияет.
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const visualOffset = Math.min(w, h) * 0.1; // Отступ для рисования (10% от размера)
+
+            let framePts = svgGlassPts.map(p => {
+                let dx = p.x - centerX;
+                let dy = p.y - centerY;
+                let len = Math.hypot(dx, dy) || 1;
+                return { 
+                    x: p.x - (dx / len) * visualOffset, 
+                    y: p.y - (dy / len) * visualOffset 
+                };
+            });
+
+            let framePath = framePts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" stroke-linejoin="round" />`;
 
             let tableHTML = '';
-            const centerX = (minX + maxX) / 2;
-            const centerY = (minY + maxY) / 2;
-
-            for (let i = 0; i < innerPts.length; i++) {
-                const ip1 = innerPts[i], ip2 = innerPts[(i + 1) % innerPts.length];
+            
+            for (let i = 0; i < framePts.length; i++) {
+                const ip1 = framePts[i], ip2 = framePts[(i + 1) % framePts.length];
                 const midX = (ip1.x + ip2.x) / 2;
                 const midY = (ip1.y + ip2.y) / 2;
                 
@@ -226,7 +217,7 @@
 
                 svg.innerHTML += `
                     <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93">${labels[i]}</text>
-                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sawLens[i].toFixed(0)}</text>
+                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30">${sawLens[i].toFixed(0)}</text>
                 `;
 
                 tableHTML += `
