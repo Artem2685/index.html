@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Калькулятор рамки</title>
+    <title>Калькулятор рамки (Карта заказа)</title>
     <style>
         :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sec: #8E8E93; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
@@ -36,8 +36,7 @@
     <div class="container">
         <div class="shape-tabs">
             <div class="shape-btn active" onclick="setShape('trap', this)">Трапеция</div>
-            <div class="shape-btn" onclick="setShape('iso_tri', this)">Равнобедр. треуг.</div>
-            <div class="shape-btn" onclick="setShape('penta', this)">5-угольник</div>
+            <div class="shape-btn" onclick="setShape('tri', this)">Треугольник (сдвиг)</div>
         </div>
 
         <div class="canvas-container">
@@ -62,8 +61,8 @@
 
     <script>
         let currentShape = 'trap';
-        const OFFSET = 10; // Отступ ровно 10 мм
-        const TAPE = 20;   // Рулетка начинается с 20 мм (2 см)
+        const OFFSET = 10; // Отступ 10 мм
+        const TAPE = 20;   // Рулетка с 2 см
 
         function setShape(shape, btn) {
             currentShape = shape;
@@ -79,35 +78,28 @@
             if (currentShape === 'trap') {
                 html = `
                     <div class="input-grid">
-                        <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="601" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Левая сторона, мм</label><input type="number" id="val_l" value="123" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Правая сторона, мм</label><input type="number" id="val_r" value="930" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="660" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Левая сторона, мм</label><input type="number" id="val_l" value="850" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Правая сторона, мм</label><input type="number" id="val_r" value="1140" oninput="calculateAndDraw()"></div>
                     </div>`;
-            } else if (currentShape === 'iso_tri') {
+            } else if (currentShape === 'tri') {
                 html = `
                     <div class="input-grid">
-                        <div class="input-group"><label>Ширина низа, мм</label><input type="number" id="val_w" value="750" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Высота, мм</label><input type="number" id="val_h" value="637" oninput="calculateAndDraw()"></div>
-                    </div>`;
-            } else if (currentShape === 'penta') {
-                html = `
-                    <div class="input-grid">
-                        <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="2010" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Высота боковин, мм</label><input type="number" id="val_hl" value="885" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_hp" value="1502" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_h" value="226" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Сдвиг вершины от левого края, мм</label><input type="number" id="val_x" value="151" oninput="calculateAndDraw()"></div>
                     </div>`;
             }
             container.innerHTML = html;
             calculateAndDraw();
         }
 
-        // ТОЛЬКО ГЕОМЕТРИЯ: Проводим линии внутрь на 10 мм и ищем пересечения
-        function getInnerPoints(pts) {
+        // Функция геометрического отступа на 10 мм внутрь
+        function offsetPolygon(pts, offset) {
             const n = pts.length;
             const innerPts = [];
             const lines = [];
             
-            // 1. Смещаем каждую сторону внутрь на 10 мм
             for (let i = 0; i < n; i++) {
                 const p1 = pts[i];
                 const p2 = pts[(i + 1) % n];
@@ -116,19 +108,17 @@
                 let dy = p2.y - p1.y;
                 const len = Math.hypot(dx, dy);
                 
-                // Вектор нормали, направленный ВНУТРЬ фигуры
                 let nx = -dy / len;
                 let ny = dx / len;
                 
                 lines.push({
-                    x1: p1.x + nx * OFFSET,
-                    y1: p1.y + ny * OFFSET,
-                    x2: p2.x + nx * OFFSET,
-                    y2: p2.y + ny * OFFSET
+                    x1: p1.x + nx * offset,
+                    y1: p1.y + ny * offset,
+                    x2: p2.x + nx * offset,
+                    y2: p2.y + ny * offset
                 });
             }
 
-            // 2. Находим точки пересечения этих линий (это и есть углы)
             for (let i = 0; i < n; i++) {
                 const l1 = lines[(i - 1 + n) % n]; 
                 const l2 = lines[i];               
@@ -148,7 +138,6 @@
                         y: (A1 * C2 - A2 * C1) / det
                     });
                 } else {
-                    // Если линии параллельны
                     innerPts.push({x: l2.x1, y: l2.y1}); 
                 }
             }
@@ -158,35 +147,28 @@
         function calculateAndDraw() {
             let pts = [];
             let labels = [];
+            let sawLens = [];
 
             if (currentShape === 'trap') {
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const l = parseFloat(document.getElementById('val_l').value) || 1;
                 const r = parseFloat(document.getElementById('val_r').value) || 1;
+                
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:r}, {x:0, y:l}];
                 labels = ['Низ', 'Правая', 'Верхний скос', 'Левая'];
             } 
-            else if (currentShape === 'iso_tri') {
+            else if (currentShape === 'tri') {
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const h = parseFloat(document.getElementById('val_h').value) || 1;
-                pts = [{x:0, y:0}, {x:w, y:0}, {x:w/2, y:h}];
+                const x = parseFloat(document.getElementById('val_x').value) || 1;
+                
+                pts = [{x:0, y:0}, {x:w, y:0}, {x:x, y:h}];
                 labels = ['Низ', 'Правая', 'Левая'];
-            } 
-            else if (currentShape === 'penta') {
-                const w = parseFloat(document.getElementById('val_w').value) || 1;
-                const hl = parseFloat(document.getElementById('val_hl').value) || 1;
-                const hp = parseFloat(document.getElementById('val_hp').value) || 1;
-                pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:hl}, {x:w/2, y:hp}, {x:0, y:hl}];
-                labels = ['Низ', 'Правая', 'Скат правый', 'Скат левый', 'Левая'];
             }
 
             const n = pts.length;
-            const sawLens = [];
+            const innerPts = offsetPolygon(pts, OFFSET);
 
-            // Строим внутренний контур
-            const innerPts = getInnerPoints(pts);
-
-            // Меряем расстояния между углами и прибавляем 20 мм
             for (let i = 0; i < n; i++) {
                 const p1 = innerPts[i];
                 const p2 = innerPts[(i + 1) % n];
@@ -201,7 +183,6 @@
             const svg = document.getElementById('drawingArea');
             svg.innerHTML = ''; 
 
-            // Переворачиваем Y для отрисовки
             const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); 
             const svgInnerPts = innerPts.map(p => ({x: p.x, y: -p.y}));
 
@@ -216,11 +197,9 @@
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
-            // Рисуем стекло
             let glassPath = svgGlassPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" stroke-linejoin="round" />`;
 
-            // Рисуем внутренние линии (красным)
             let framePath = svgInnerPts.map(p => `${p.x},${p.y}`).join(' ');
             svg.innerHTML += `<polygon points="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" stroke-linejoin="round" />`;
 
