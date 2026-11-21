@@ -5,26 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Графический калькулятор рамки</title>
     <style>
-        :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sec: #8E8E93; }
+        :root { --primary: #007AFF; --success: #34C759; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E; --sec: #8E8E93; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 10px; background-color: var(--bg); color: var(--text); -webkit-user-select: none; }
         .container { max-width: 700px; margin: 0 auto; }
         
-        /* Холст для рисования */
-        .canvas-container { background: var(--card); border-radius: 16px; padding: 5px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); height: 350px; touch-action: none; position: relative; }
+        .canvas-container { background: var(--card); border-radius: 16px; padding: 5px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); height: 300px; touch-action: none; position: relative; }
         svg { width: 100%; height: 100%; }
         
         .hint { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 8px; font-size: 0.8em; color: var(--sec); pointer-events: none; }
         .btn-clear { position: absolute; top: 10px; right: 10px; background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 10; }
 
-        /* Поля ввода */
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .input-group { display: flex; flex-direction: column; background: #F9F9F9; padding: 10px; border-radius: 10px; border: 2px solid #E5E5EA; }
-        .input-group label { font-weight: bold; font-size: 1.2em; margin-bottom: 5px; color: var(--primary); }
-        .input-group input { padding: 10px; border: none; border-radius: 5px; font-size: 1.1em; font-weight: 600; text-align: center; background: #fff; color: var(--text); }
+        .input-group label { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; color: var(--primary); }
+        .input-group input { padding: 8px; border: none; border-radius: 5px; font-size: 1.1em; font-weight: 600; text-align: center; background: #fff; color: var(--text); }
         .input-group input:focus { outline: 2px solid var(--primary); }
 
-        /* Таблица */
+        .angle-toggles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .angle-btn { padding: 10px 15px; border: 2px solid #E5E5EA; border-radius: 8px; background: #fff; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .angle-btn.active { border-color: var(--success); background: #E8F9ED; color: var(--success); }
+
         .results-card { background: var(--card); border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; }
         .results-title { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; text-align: center; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; text-align: center; }
@@ -37,9 +38,9 @@
 <body>
     <div class="container">
         <div class="canvas-container" id="canvasContainer">
-            <div class="hint">Кликни по экрану, чтобы поставить углы фигуры</div>
+            <div class="hint">Ставь точки пальцем (углы фигуры)</div>
             <button class="btn-clear" onclick="clearCanvas()">Сброс</button>
-            <svg id="drawingArea" viewBox="0 0 400 350" preserveAspectRatio="xMidYMid meet"></svg>
+            <svg id="drawingArea" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
         <div class="input-card" id="inputFields">
@@ -63,21 +64,19 @@
     <script>
         const svg = document.getElementById('drawingArea');
         const container = document.getElementById('canvasContainer');
-        let points = []; // Точки, которые ставит пользователь (X, Y экрана)
-        let realSizes = {}; // Введенные размеры сторон
+        let points = []; 
+        let realSizes = {}; 
+        let rightAngles = []; // Индексы углов, отмеченных как прямые
         const OFFSET = 10;
         const TAPE = 20;
         const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
 
-        // Обработка клика/тапа
         container.addEventListener('click', function(e) {
-            // Если кликнули по кнопке сброса - игнорируем
-            if(e.target.tagName === 'BUTTON' || e.target.classList.contains('hint')) return;
+            if(e.target.tagName === 'BUTTON' || e.target.classList.contains('hint') || e.target.closest('.input-card')) return;
 
             const rect = container.getBoundingClientRect();
-            // Переводим координаты клика в координаты SVG (0-400, 0-350)
             const x = (e.clientX - rect.left) / rect.width * 400;
-            const y = (e.clientY - rect.top) / rect.height * 350;
+            const y = (e.clientY - rect.top) / rect.height * 300;
 
             points.push({x, y});
             drawPoints();
@@ -87,6 +86,7 @@
         function clearCanvas() {
             points = [];
             realSizes = {};
+            rightAngles = [];
             drawPoints();
             document.getElementById('inputFields').innerHTML = '<div style="text-align: center; color: var(--sec);">Нарисуйте фигуру (минимум 3 точки)</div>';
             document.getElementById('resultsCard').style.display = 'none';
@@ -96,31 +96,29 @@
             svg.innerHTML = '';
             if (points.length === 0) return;
 
-            // Рисуем линии между точками
             let pathD = '';
             points.forEach((p, i) => {
                 pathD += (i === 0 ? 'M' : 'L') + ` ${p.x} ${p.y} `;
             });
-            if (points.length > 2) pathD += 'Z'; // Замыкаем фигуру
+            if (points.length > 2) pathD += 'Z';
 
             svg.innerHTML += `<path d="${pathD}" fill="rgba(0, 122, 255, 0.1)" stroke="#007AFF" stroke-width="2" />`;
 
-            // Рисуем точки (углы)
-            points.forEach(p => {
-                svg.innerHTML += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#007AFF" />`;
+            points.forEach((p, i) => {
+                const isRight = rightAngles.includes(i);
+                const color = isRight ? '#34C759' : '#007AFF';
+                svg.innerHTML += `<circle cx="${p.x}" cy="${p.y}" r="6" fill="${color}" />`;
             });
 
-            // Рисуем буквы (только если есть размеры)
             if (Object.keys(realSizes).length > 0 && points.length > 2) {
+                const centerX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+                const centerY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
                 for (let i = 0; i < points.length; i++) {
                     const p1 = points[i];
                     const p2 = points[(i + 1) % points.length];
                     const midX = (p1.x + p2.x) / 2;
                     const midY = (p1.y + p2.y) / 2;
-                    
-                    // Смещаем букву чуть внутрь фигуры
-                    const centerX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
-                    const centerY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
                     
                     let dx = midX - centerX;
                     let dy = midY - centerY;
@@ -129,9 +127,7 @@
                     const textX = midX - (dx/len) * 15;
                     const textY = midY - (dy/len) * 15;
 
-                    svg.innerHTML += `
-                        <text x="${textX}" y="${textY}" text-anchor="middle" font-size="20" font-weight="bold" fill="#8E8E93">${letters[i]}</text>
-                    `;
+                    svg.innerHTML += `<text x="${textX}" y="${textY}" text-anchor="middle" font-size="18" font-weight="bold" fill="#8E8E93">${letters[i]}</text>`;
                 }
             }
         }
@@ -151,53 +147,196 @@
                 `;
             }
             html += '</div>';
+
+            html += `<div style="font-weight:bold; margin-bottom:5px; font-size:0.9em; color:var(--sec);">Отметьте прямые углы (90°):</div>`;
+            html += `<div class="angle-toggles">`;
+            for (let i = 0; i < points.length; i++) {
+                const isActive = rightAngles.includes(i) ? 'active' : '';
+                html += `<div class="angle-btn ${isActive}" onclick="toggleAngle(${i})">Угол ${letters[i]}</div>`;
+            }
+            html += `</div>`;
+
             document.getElementById('inputFields').innerHTML = html;
+        }
+
+        function toggleAngle(index) {
+            if (rightAngles.includes(index)) {
+                rightAngles = rightAngles.filter(i => i !== index);
+            } else {
+                rightAngles.push(index);
+            }
+            drawPoints();
+            generateInputs();
+            calculateAndDraw();
         }
 
         function updateSize(index, value) {
             realSizes[index] = parseFloat(value) || 0;
             drawPoints();
-            
-            // Если введены все размеры, считаем
-            if (Object.keys(realSizes).length === points.length) {
-                calculateAndDraw();
-            }
+            calculateAndDraw();
         }
 
-        // Пересчет фигуры по введенным размерам (упрощенная логика для многоугольника)
+        // === МАТЕМАТИКА ===
+        // Восстанавливает идеальную фигуру по заданным длинам и прямым углам
+        function reconstructShape() {
+            const n = points.length;
+            let newPts = JSON.parse(JSON.stringify(points)); // Копируем текущие координаты
+
+            // Упрощенная итеративная подгонка (релаксация)
+            // Мы двигаем точки так, чтобы длины сторон совпали с введенными, а прямые углы стали 90 градусов
+            for (let iter = 0; iter < 50; iter++) {
+                // 1. Подгоняем длины сторон
+                for (let i = 0; i < n; i++) {
+                    const p1 = newPts[i];
+                    const p2 = newPts[(i + 1) % n];
+                    const targetLen = realSizes[i];
+                    if (!targetLen) continue;
+
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const currentLen = Math.hypot(dx, dy);
+                    if (currentLen === 0) continue;
+
+                    const error = (targetLen - currentLen) / 2;
+                    const nx = dx / currentLen;
+                    const ny = dy / currentLen;
+
+                    p1.x -= nx * error;
+                    p1.y -= ny * error;
+                    p2.x += nx * error;
+                    p2.y += ny * error;
+                }
+
+                // 2. Подгоняем прямые углы
+                rightAngles.forEach(idx => {
+                    const p0 = newPts[(idx - 1 + n) % n];
+                    const p1 = newPts[idx];
+                    const p2 = newPts[(idx + 1) % n];
+
+                    // Векторы сторон
+                    const v1 = { x: p0.x - p1.x, y: p0.y - p1.y };
+                    const v2 = { x: p2.x - p1.x, y: p2.y - p1.y };
+                    
+                    // Скалярное произведение должно быть 0 для прямого угла
+                    const dot = v1.x * v2.x + v1.y * v2.y;
+                    
+                    // Простейшая коррекция: сдвигаем соседние точки, чтобы уменьшить скалярное произведение
+                    // (Это очень упрощенная эвристика для демо)
+                    const len1 = Math.hypot(v1.x, v1.y);
+                    const len2 = Math.hypot(v2.x, v2.y);
+                    if(len1 > 0 && len2 > 0) {
+                        const correction = dot / (len1 * len2) * 5; // Шаг коррекции
+                        // Двигаем p0 перпендикулярно v2
+                        p0.x -= (v2.y / len2) * correction;
+                        p0.y += (v2.x / len2) * correction;
+                    }
+                });
+            }
+            return newPts;
+        }
+
+        function offsetPolygon(pts, offset) {
+            const n = pts.length;
+            const innerPts = [];
+            const lines = [];
+            
+            for (let i = 0; i < n; i++) {
+                const p1 = pts[i];
+                const p2 = pts[(i + 1) % n];
+                
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                
+                let nx = -dy / len;
+                let ny = dx / len;
+                
+                lines.push({
+                    x1: p1.x + nx * offset,
+                    y1: p1.y + ny * offset,
+                    x2: p2.x + nx * offset,
+                    y2: p2.y + ny * offset
+                });
+            }
+
+            for (let i = 0; i < n; i++) {
+                const l1 = lines[(i - 1 + n) % n]; 
+                const l2 = lines[i];               
+                
+                const A1 = l1.y2 - l1.y1;
+                const B1 = l1.x1 - l1.x2;
+                const C1 = A1 * l1.x1 + B1 * l1.y1;
+
+                const A2 = l2.y2 - l2.y1;
+                const B2 = l2.x1 - l2.x2;
+                const C2 = A2 * l2.x1 + B2 * l2.y1;
+
+                const det = A1 * B2 - A2 * B1;
+                if (Math.abs(det) > 0.001) {
+                    innerPts.push({
+                        x: (B2 * C1 - B1 * C2) / det,
+                        y: (A1 * C2 - A2 * C1) / det
+                    });
+                } else {
+                    innerPts.push({x: l2.x1, y: l2.y1}); 
+                }
+            }
+            return innerPts;
+        }
+
         function calculateAndDraw() {
-            // В реальном приложении здесь сложная математика перестроения фигуры по сторонам.
-            // Для демо мы просто масштабируем текущий нарисованный контур, 
-            // предполагая, что пользователь нарисовал его примерно похожим.
-            
-            // Но так как нам нужны точные цифры для пилы (отступ 10 + 20), 
-            // мы будем использовать введенные размеры и текущие углы для расчета.
-            
-            // ВНИМАНИЕ: Это упрощенная демонстрация. Для реального цеха нужен сложный геометрический движок,
-            // который перестраивает фигуру по длинам сторон.
-            
-            // Пока сделаем простой расчет: берем введенную длину, вычитаем 2*10 (отступ) 
-            // и прибавляем 20 (рулетка) - это для прямых углов.
-            // Для углов это работает иначе.
-            
-            // Пока выведем просто введенные значения, чтобы ты увидел интерфейс.
-            
+            if (Object.keys(realSizes).length !== points.length) {
+                document.getElementById('resultsCard').style.display = 'none';
+                return;
+            }
+
+            // Перестраиваем фигуру по размерам
+            const idealPts = reconstructShape();
+
+            // Делаем отступ внутрь
+            const innerPts = offsetPolygon(idealPts, OFFSET);
+
+            // Считаем длины
             let tableHTML = '';
-            for (let i = 0; i < points.length; i++) {
-                const size = realSizes[i] || 0;
-                // Заглушка формулы: (размер - 20) + 20 = размер (для прямых).
-                // Для реальных углов это будет считаться по-другому.
-                const sawSize = size; 
+            for (let i = 0; i < idealPts.length; i++) {
+                const p1 = innerPts[i];
+                const p2 = innerPts[(i + 1) % idealPts.length];
+                const L_inner = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                const sawLens = L_inner + TAPE; 
                 
                 tableHTML += `
                     <tr>
                         <td class="td-name">Сторона ${letters[i]}</td>
-                        <td class="td-saw">${sawSize.toFixed(1)}</td>
+                        <td class="td-saw">${sawLens.toFixed(1)}</td>
                     </tr>
                 `;
             }
             document.getElementById('resultsBody').innerHTML = tableHTML;
             document.getElementById('resultsCard').style.display = 'block';
+
+            // Перерисовываем SVG с учетом идеальной формы
+            svg.innerHTML = '';
+            let pathD = '';
+            idealPts.forEach((p, i) => {
+                pathD += (i === 0 ? 'M' : 'L') + ` ${p.x} ${p.y} `;
+            });
+            if (idealPts.length > 2) pathD += 'Z';
+
+            svg.innerHTML += `<path d="${pathD}" fill="rgba(0, 122, 255, 0.1)" stroke="#007AFF" stroke-width="2" />`;
+
+            idealPts.forEach((p, i) => {
+                const isRight = rightAngles.includes(i);
+                const color = isRight ? '#34C759' : '#007AFF';
+                svg.innerHTML += `<circle cx="${p.x}" cy="${p.y}" r="6" fill="${color}" />`;
+            });
+
+            // Рисуем внутренний контур (красный)
+            let framePath = '';
+            innerPts.forEach((p, i) => {
+                framePath += (i === 0 ? 'M' : 'L') + ` ${p.x} ${p.y} `;
+            });
+            if (innerPts.length > 2) framePath += 'Z';
+            svg.innerHTML += `<path d="${framePath}" fill="none" stroke="#FF3B30" stroke-width="2" stroke-dasharray="5,5" />`;
         }
 
         drawPoints();
