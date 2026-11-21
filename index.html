@@ -352,24 +352,35 @@
             svg.innerHTML += `<path d="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" />`;
 
             // Внутренний контур (отступ 10 мм)
-            // Внутренняя ширина
             const innerW = w - 2 * OFFSET;
-            // Внутренняя высота прямых стоек
-            const innerHs = hs > 0 ? hs - OFFSET : 0; 
-            // Внутренняя высота дуги
-            const innerRy = (h - OFFSET) - (hs > 0 ? hs - OFFSET : 0); 
-
+            
+            // ГЛАВНАЯ ОШИБКА БЫЛА ЗДЕСЬ: 
+            // Мы должны брать внутреннюю высоту стоек и внутреннюю высоту дуги
+            // Но дуга начинается там, где заканчиваются стойки.
+            
+            let innerRy = 0;
+            let innerHs = 0;
             let framePath = '';
+
             if (hs > 0) {
-                framePath = `M ${OFFSET},${-OFFSET} L ${OFFSET},${-(h - OFFSET - innerRy)} A ${innerW/2},${innerRy} 0 0,1 ${w - OFFSET},${-(h - OFFSET - innerRy)} L ${w - OFFSET},${-OFFSET} Z`;
+                // Со стойками
+                innerHs = hs - OFFSET; // Высота прямой стойки внутри (отступ снизу и сверху)
+                innerRy = (h - OFFSET) - hs; // Высота дуги внутри (от верха стойки до пика)
+                
+                // Точка, где заканчивается стойка и начинается дуга (по внутреннему контуру)
+                const y_junction = -innerHs;
+
+                framePath = `M ${OFFSET},${-OFFSET} L ${OFFSET},${y_junction} A ${innerW/2},${innerRy} 0 0,1 ${w - OFFSET},${y_junction} L ${w - OFFSET},${-OFFSET} Z`;
             } else {
-                framePath = `M ${OFFSET},${-OFFSET} A ${innerW/2},${h - 2*OFFSET} 0 0,1 ${w - OFFSET},${-OFFSET} Z`;
+                // Без стоек
+                innerRy = h - 2 * OFFSET;
+                framePath = `M ${OFFSET},${-OFFSET} A ${innerW/2},${innerRy} 0 0,1 ${w - OFFSET},${-OFFSET} Z`;
             }
             svg.innerHTML += `<path d="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" />`;
 
             // --- МАТЕМАТИКА РАСЧЕТА ДЛИН ---
             const bottomWidth = innerW + TAPE;
-            const sideHeight = innerHs + TAPE;
+            const sideHeight = (hs > 0) ? innerHs + TAPE : 0;
 
             // Длина дуги (эллипс)
             const a = innerW / 2;
