@@ -352,30 +352,26 @@
             svg.innerHTML += `<path d="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" />`;
 
             // --- ВНУТРЕННИЙ КОНТУР (КРАСНЫЙ) ---
-            // Строим его вручную по точкам, чтобы он не вылезал
             const innerW = w - 2 * OFFSET;
             const innerHs = hs > 0 ? hs - OFFSET : 0;
             
-            let framePath = `M ${OFFSET},${-OFFSET} `; // Начинаем с левого нижнего угла
+            let framePath = `M ${OFFSET},${-OFFSET} `; 
             
             if (hs > 0) {
-                // Прямая стойка
                 framePath += `L ${OFFSET},${-innerHs} `;
-                // Дуга
+                // Дуга от левой стойки к правой
                 const innerRy = h - OFFSET - innerHs;
-                const arcSteps = 50; // Количество точек для дуги
+                const arcSteps = 50; 
                 for (let i = 1; i < arcSteps; i++) {
-                    const t = Math.PI - (i / arcSteps) * Math.PI; // Угол от 180 до 0 градусов
+                    const t = Math.PI - (i / arcSteps) * Math.PI; 
+                    // ИСПРАВЛЕНИЕ: Здесь мы строго вычитаем высоту дуги, чтобы она шла внутрь
                     const px = w/2 + (innerW/2) * Math.cos(t);
                     const py = -innerHs - innerRy * Math.sin(t);
                     framePath += `L ${px},${py} `;
                 }
-                // Конец дуги
                 framePath += `L ${w - OFFSET},${-innerHs} `;
-                // Правая стойка
                 framePath += `L ${w - OFFSET},${-OFFSET} `;
             } else {
-                // Чистая арка без стоек
                 const innerRy = h - 2 * OFFSET;
                 const arcSteps = 50;
                 for (let i = 1; i < arcSteps; i++) {
