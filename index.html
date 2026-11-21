@@ -141,9 +141,9 @@
 
                 let inputsHtml = `
                     <div class="input-grid">
-                        <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="1000" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_h" value="1500" oninput="calculateAndDraw()"></div>
-                        ${archHasPosts ? `<div class="input-group"><label>Высота прямых стоек, мм</label><input type="number" id="val_hs" value="800" oninput="calculateAndDraw()"></div>` : ''}
+                        <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="500" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_h" value="450" oninput="calculateAndDraw()"></div>
+                        ${archHasPosts ? `<div class="input-group"><label>Высота прямых стоек, мм</label><input type="number" id="val_hs" value="270" oninput="calculateAndDraw()"></div>` : ''}
                     </div>
                 `;
                 html = toggleHtml + inputsHtml;
@@ -353,27 +353,17 @@
 
             // Внутренний контур (отступ 10 мм)
             const innerW = w - 2 * OFFSET;
+            const innerHs = hs > 0 ? hs - OFFSET : 0; 
             
-            // ГЛАВНАЯ ОШИБКА БЫЛА ЗДЕСЬ: 
-            // Мы должны брать внутреннюю высоту стоек и внутреннюю высоту дуги
-            // Но дуга начинается там, где заканчиваются стойки.
-            
-            let innerRy = 0;
-            let innerHs = 0;
+            // ГЛАВНОЕ ИСПРАВЛЕНИЕ: 
+            // Высота дуги внутри = (Внешняя высота - отступ сверху) - (Высота стойки внутри)
+            const innerRy = hs > 0 ? (h - OFFSET - innerHs) : (h - 2 * OFFSET);
+
             let framePath = '';
-
             if (hs > 0) {
-                // Со стойками
-                innerHs = hs - OFFSET; // Высота прямой стойки внутри (отступ снизу и сверху)
-                innerRy = (h - OFFSET) - hs; // Высота дуги внутри (от верха стойки до пика)
-                
-                // Точка, где заканчивается стойка и начинается дуга (по внутреннему контуру)
-                const y_junction = -innerHs;
-
+                const y_junction = -innerHs; // Точка, где стойка переходит в дугу
                 framePath = `M ${OFFSET},${-OFFSET} L ${OFFSET},${y_junction} A ${innerW/2},${innerRy} 0 0,1 ${w - OFFSET},${y_junction} L ${w - OFFSET},${-OFFSET} Z`;
             } else {
-                // Без стоек
-                innerRy = h - 2 * OFFSET;
                 framePath = `M ${OFFSET},${-OFFSET} A ${innerW/2},${innerRy} 0 0,1 ${w - OFFSET},${-OFFSET} Z`;
             }
             svg.innerHTML += `<path d="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" />`;
