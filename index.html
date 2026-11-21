@@ -39,8 +39,8 @@
             <div class="shape-btn" onclick="setShape('iso_tri', this)">Равнобедр. треуг.</div>
             <div class="shape-btn" onclick="setShape('right_tri', this)">Прямоугольный треуг.</div>
             <div class="shape-btn" onclick="setShape('scalene_tri', this)">Неравнобедр. треуг.</div>
-            <div class="shape-btn" onclick="setShape('penta_1', this)">5-угольник (выс. боков)</div>
-            <div class="shape-btn" onclick="setShape('penta_2', this)">5-угольник (верх)</div>
+            <div class="shape-btn" onclick="setShape('penta_1', this)">5-угольник (Домик)</div>
+            <div class="shape-btn" onclick="setShape('penta_2', this)">5-угольник (Верх)</div>
         </div>
 
         <div class="canvas-container">
@@ -80,12 +80,11 @@
             let html = '';
 
             if (currentShape === 'trap') {
-                // Прямоугольная трапеция (два прямых угла снизу)
                 html = `
                     <div class="input-grid">
-                        <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="601" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Высота левой, мм</label><input type="number" id="val_l" value="123" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Высота правой, мм</label><input type="number" id="val_r" value="930" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="660" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Левая сторона, мм</label><input type="number" id="val_l" value="850" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Правая сторона, мм</label><input type="number" id="val_r" value="1140" oninput="calculateAndDraw()"></div>
                     </div>`;
             } else if (currentShape === 'iso_tri') {
                 html = `
@@ -94,30 +93,27 @@
                         <div class="input-group"><label>Высота, мм</label><input type="number" id="val_h" value="637" oninput="calculateAndDraw()"></div>
                     </div>`;
             } else if (currentShape === 'right_tri') {
-                // Прямоугольный треугольник (один прямой угол)
                 html = `
                     <div class="input-grid">
                         <div class="input-group"><label>Ширина (низ), мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Высота (левая), мм</label><input type="number" id="val_h" value="398" oninput="calculateAndDraw()"></div>
                     </div>`;
             } else if (currentShape === 'scalene_tri') {
-                // Неравнобедренный (указываем сдвиг вершины от левого края)
                 html = `
                     <div class="input-grid">
                         <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="446" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_h" value="226" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Сдвиг вершины от левого края, мм</label><input type="number" id="val_x" value="151" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Сдвиг вершины, мм</label><input type="number" id="val_x" value="151" oninput="calculateAndDraw()"></div>
                     </div>`;
             } else if (currentShape === 'penta_1') {
-                // Домик (указываем ширину и высоты правой/левой стороны)
                 html = `
                     <div class="input-grid">
                         <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="2010" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Высота левой стороны, мм</label><input type="number" id="val_hl" value="885" oninput="calculateAndDraw()"></div>
                         <div class="input-group"><label>Высота правой стороны, мм</label><input type="number" id="val_hr" value="885" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Общая высота пика, мм</label><input type="number" id="val_hp" value="1502" oninput="calculateAndDraw()"></div>
                     </div>`;
             } else if (currentShape === 'penta_2') {
-                // 5-угольник с верхней горизонтальной стороной
                 html = `
                     <div class="input-grid">
                         <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="966" oninput="calculateAndDraw()"></div>
@@ -130,7 +126,7 @@
             calculateAndDraw();
         }
 
-        // ТОЛЬКО ГЕОМЕТРИЯ: Проводим линии внутрь на 10 мм и ищем пересечения
+        // Геометрическое смещение линий внутрь на 10 мм
         function getInnerPoints(pts) {
             const n = pts.length;
             const innerPts = [];
@@ -188,7 +184,6 @@
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const l = parseFloat(document.getElementById('val_l').value) || 1;
                 const r = parseFloat(document.getElementById('val_r').value) || 1;
-                // Два прямых угла снизу
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:r}, {x:0, y:l}];
                 labels = ['Низ', 'Правая', 'Верхний скос', 'Левая'];
             } 
@@ -201,7 +196,6 @@
             else if (currentShape === 'right_tri') {
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const h = parseFloat(document.getElementById('val_h').value) || 1;
-                // Прямой угол слева внизу
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:0, y:h}];
                 labels = ['Низ', 'Гипотенуза', 'Высота'];
             }
@@ -216,8 +210,10 @@
                 const w = parseFloat(document.getElementById('val_w').value) || 1;
                 const hl = parseFloat(document.getElementById('val_hl').value) || 1;
                 const hr = parseFloat(document.getElementById('val_hr').value) || 1;
-                // Пик по центру
-                pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:hr}, {x:w/2, y:Math.max(hl, hr) + 200}, {x:0, y:hl}];
+                const hp = parseFloat(document.getElementById('val_hp').value) || 1;
+                
+                // Домик с пиком по центру. Боковые стенки строго вертикальны.
+                pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:hr}, {x:w/2, y:hp}, {x:0, y:hl}];
                 labels = ['Низ', 'Правая', 'Скат правый', 'Скат левый', 'Левая'];
             }
             else if (currentShape === 'penta_2') {
@@ -226,7 +222,8 @@
                 const hr = parseFloat(document.getElementById('val_hr').value) || 1;
                 const top = parseFloat(document.getElementById('val_top').value) || 1;
                 const max_h = Math.max(hl, hr);
-                // С верхней горизонтальной стороной
+                
+                // 5-угольник с верхней горизонтальной стороной (срезанный домик)
                 pts = [{x:0, y:0}, {x:w, y:0}, {x:w, y:hr}, {x:w-top, y:max_h}, {x:0, y:hl}];
                 labels = ['Низ', 'Правая', 'Скос', 'Верх', 'Левая'];
             }
