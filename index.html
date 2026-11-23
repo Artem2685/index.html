@@ -17,7 +17,13 @@
         svg { width: 100%; height: 100%; overflow: visible; }
 
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        /* ИСПРАВЛЕНИЕ ДЛЯ ТЕЛЕФОНА: на узких экранах поля идут в одну колонку */
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 500px) {
+            .input-grid { grid-template-columns: 1fr; }
+        }
+
         .input-group { display: flex; flex-direction: column; }
         .input-group label { font-weight: 600; font-size: 0.8em; margin-bottom: 5px; color: var(--sec); }
         .input-group input { padding: 12px; border: 2px solid #E5E5EA; border-radius: 10px; font-size: 1.1em; font-weight: 600; text-align: center; background: #F9F9F9; color: var(--text); }
@@ -312,9 +318,10 @@
                 const textX = midX + nx * 25;
                 const textY = midY + ny * 25;
 
+                // ИСПРАВЛЕНИЕ: Используем векторный эффект, чтобы текст не масштабировался вместе с фигурой
                 svg.innerHTML += `
-                    <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93">${labels[i]}</text>
-                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30">${sawLens[i].toFixed(0)}</text>
+                    <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">${labels[i]}</text>
+                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${sawLens[i].toFixed(0)}</text>
                 `;
 
                 tableHTML += `
@@ -384,7 +391,7 @@
             
             svg.innerHTML += `<path d="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" />`;
 
-            // --- МАТЕМАТИКА РАСЧЕТА ДЛИН (ФИКСИРОВАННАЯ ПОПРАВКА) ---
+            // --- МАТЕМАТИКА РАСЧЕТА ДЛИН ---
             const bottomWidth = innerW + TAPE;
             const sideHeight = (hs > 0) ? innerHs + TAPE : 0;
 
@@ -396,16 +403,14 @@
                 b = h - 2 * OFFSET;
             }
 
-            // Считаем по формуле эллипса
             const h_ellipse = Math.pow((a - b) / (a + b), 2);
             const perimeter = Math.PI * (a + b) * (1 + (3 * h_ellipse) / (10 + Math.sqrt(4 - 3 * h_ellipse)));
             let archLength = (perimeter / 2) + TAPE; 
 
-            // ТВОЯ ФИКСИРОВАННАЯ ПОПРАВКА
             if (hs > 0) {
-                archLength = archLength - 15; // Для арок со стойками отнимаем 15 мм
+                archLength = archLength - 15;
             } else {
-                archLength = archLength + 35; // Для чистых арок прибавляем 35 мм
+                archLength = archLength + 35;
             }
 
             let tableHTML = '';
@@ -416,26 +421,26 @@
                 labels = ['Низ', 'Левая стойка', 'Изогнутая часть (гнуть)', 'Правая стойка'];
                 sawLens = [bottomWidth, sideHeight, archLength, sideHeight];
 
-                svg.innerHTML += `<text x="${w/2}" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93">Низ</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30">${bottomWidth.toFixed(0)}</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Низ</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${bottomWidth.toFixed(0)}</text>`;
                 
-                svg.innerHTML += `<text x="-25" y="${-(h-hs)/2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" transform="rotate(-90, -25, ${-(h-hs)/2})">Стойка</text>`;
-                svg.innerHTML += `<text x="-10" y="${-(h-hs)/2}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" transform="rotate(-90, -10, ${-(h-hs)/2})">${sideHeight.toFixed(0)}</text>`;
+                svg.innerHTML += `<text x="-25" y="${-(h-hs)/2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" transform="rotate(-90, -25, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">Стойка</text>`;
+                svg.innerHTML += `<text x="-10" y="${-(h-hs)/2}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" transform="rotate(-90, -10, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">${sideHeight.toFixed(0)}</text>`;
 
-                svg.innerHTML += `<text x="${w+25}" y="${-(h-hs)/2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" transform="rotate(90, ${w+25}, ${-(h-hs)/2})">Стойка</text>`;
-                svg.innerHTML += `<text x="${w+10}" y="${-(h-hs)/2}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" transform="rotate(90, ${w+10}, ${-(h-hs)/2})">${sideHeight.toFixed(0)}</text>`;
+                svg.innerHTML += `<text x="${w+25}" y="${-(h-hs)/2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" transform="rotate(90, ${w+25}, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">Стойка</text>`;
+                svg.innerHTML += `<text x="${w+10}" y="${-(h-hs)/2}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" transform="rotate(90, ${w+10}, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">${sideHeight.toFixed(0)}</text>`;
 
-                svg.innerHTML += `<text x="${w/2}" y="${-(h - hs/2) - 20}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93">Дуга (гнуть)</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="${-(h - hs/2) - 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30">${archLength.toFixed(0)}</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="${-(h - hs/2) - 20}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Дуга (гнуть)</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="${-(h - hs/2) - 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${archLength.toFixed(0)}</text>`;
             } else {
                 labels = ['Низ', 'Изогнутая часть (гнуть)'];
                 sawLens = [bottomWidth, archLength];
 
-                svg.innerHTML += `<text x="${w/2}" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93">Низ</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30">${bottomWidth.toFixed(0)}</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Низ</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${bottomWidth.toFixed(0)}</text>`;
 
-                svg.innerHTML += `<text x="${w/2}" y="${-h/2 - 20}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93">Дуга (гнуть)</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="${-h/2 - 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30">${archLength.toFixed(0)}</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="${-h/2 - 20}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Дуга (гнуть)</text>`;
+                svg.innerHTML += `<text x="${w/2}" y="${-h/2 - 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${archLength.toFixed(0)}</text>`;
             }
 
             for (let i = 0; i < labels.length; i++) {
