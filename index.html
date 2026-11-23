@@ -43,7 +43,7 @@
         .td-saw { font-size: 1.2em; font-weight: bold; color: var(--primary); }
         
         /* Стили для HTML-текста поверх SVG */
-        .label-text { position: absolute; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; }
+        .label-text { position: absolute; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; background: rgba(255,255,255,0.8); padding: 2px 5px; border-radius: 4px; }
         .label-name { font-size: 12px; font-weight: bold; color: #8E8E93; display: block; }
         .label-value { font-size: 16px; font-weight: bold; color: #FF3B30; display: block; margin-top: 2px; }
     </style>
@@ -286,7 +286,7 @@
             const svg = document.getElementById('drawingArea');
             const overlay = document.getElementById('labelsOverlay');
             svg.innerHTML = ''; 
-            overlay.innerHTML = ''; // Очищаем текстовый слой
+            overlay.innerHTML = ''; 
 
             const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); 
             const svgInnerPts = innerPts.map(p => ({x: p.x, y: -p.y}));
@@ -298,7 +298,7 @@
             
             const w = maxX - minX || 10;
             const h = maxY - minY || 10;
-            const padding = 60; // Отступ для границ фигуры
+            const padding = 60; 
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
@@ -317,7 +317,6 @@
                 const svgRect = svg.getBoundingClientRect();
                 const vbW = w + padding*2;
                 const vbH = h + padding*2;
-                // Учитываем реальное соотношение сторон viewBox и экрана
                 const scale = Math.min(svgRect.width / vbW, svgRect.height / vbH);
                 const offsetX = (svgRect.width - vbW * scale) / 2;
                 const offsetY = (svgRect.height - vbH * scale) / 2;
@@ -340,16 +339,15 @@
                     nx = -nx; ny = -ny;
                 }
                 
-                // Смещаем текст от линии
-                const textX = midX + nx * 25;
-                const textY = midY + ny * 25;
+                // Вычисляем экранные координаты середины стороны
+                const midScreen = getScreenXY(midX, midY);
 
-                // Получаем экранные координаты
-                const screenPos = getScreenXY(textX, textY);
+                // Отодвигаем текст наружу на 35 пикселей уже в экранных координатах
+                const textScreenX = midScreen.x + nx * 35;
+                const textScreenY = midScreen.y + ny * 35;
 
-                // Добавляем HTML-текст в слой поверх SVG
                 overlay.innerHTML += `
-                    <div class="label-text" style="left: ${screenPos.x}px; top: ${screenPos.y}px;">
+                    <div class="label-text" style="left: ${textScreenX}px; top: ${textScreenY}px;">
                         <span class="label-name">${labels[i]}</span>
                         <span class="label-value">${sawLens[i].toFixed(0)}</span>
                     </div>
@@ -470,15 +468,15 @@
 
                 // Низ
                 let pos = getScreenXY(w/2, 0);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-top: 20px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y + 35}px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
                 
                 // Левая стойка
                 pos = getScreenXY(0, -h/2);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-left: -40px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x - 45}px; top: ${pos.y}px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
 
                 // Правая стойка
                 pos = getScreenXY(w, -h/2);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-left: 40px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x + 45}px; top: ${pos.y}px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
 
                 // Дуга
                 pos = getScreenXY(w/2, -h/2);
@@ -489,7 +487,7 @@
 
                 // Низ
                 let pos = getScreenXY(w/2, 0);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-top: 20px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y + 35}px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
 
                 // Дуга
                 pos = getScreenXY(w/2, -h/2);
@@ -508,8 +506,6 @@
         }
 
         renderInputs();
-        
-        // Пересчитываем позиции текста при изменении размера окна (поворот телефона)
         window.addEventListener('resize', calculateAndDraw);
     </script>
 </body>
