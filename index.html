@@ -13,12 +13,11 @@
         .shape-btn { padding: 10px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.8em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); transition: all 0.2s; }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
-        .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; }
+        .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; position: relative; }
         svg { width: 100%; height: 100%; overflow: visible; }
 
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
-        /* ИСПРАВЛЕНИЕ ДЛЯ ТЕЛЕФОНА: на узких экранах поля идут в одну колонку */
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         @media (max-width: 500px) {
             .input-grid { grid-template-columns: 1fr; }
@@ -54,7 +53,7 @@
         </div>
 
         <div class="canvas-container">
-            <svg id="drawingArea" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg>
+            <svg id="drawingArea" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
 
         <div class="input-card" id="inputFields"></div>
@@ -288,8 +287,9 @@
             
             const w = maxX - minX || 10;
             const h = maxY - minY || 10;
-            const padding = 60; 
+            const padding = 40; 
             
+            // Настраиваем viewBox только для линий, текст будет отрисовываться отдельно
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
             let glassPath = svgGlassPts.map(p => `${p.x},${p.y}`).join(' ');
@@ -301,6 +301,10 @@
             let tableHTML = '';
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
+
+            // Коэффициенты для перевода из координат фигуры в проценты экрана
+            const scaleX = 100 / (w + padding*2);
+            const scaleY = 100 / (h + padding*2);
 
             for (let i = 0; i < svgInnerPts.length; i++) {
                 const ip1 = svgInnerPts[i], ip2 = svgInnerPts[(i + 1) % svgInnerPts.length];
@@ -315,13 +319,16 @@
                     nx = -nx; ny = -ny;
                 }
                 
-                const textX = midX + nx * 25;
-                const textY = midY + ny * 25;
+                const textX = midX + nx * (padding/2);
+                const textY = midY + ny * (padding/2);
 
-                // ИСПРАВЛЕНИЕ: Используем векторный эффект, чтобы текст не масштабировался вместе с фигурой
+                // Переводим координаты в проценты и создаем текст
+                const leftPct = (textX - (minX - padding)) * scaleX;
+                const topPct = (textY - (minY - padding)) * scaleY;
+
                 svg.innerHTML += `
-                    <text x="${textX}" y="${textY - 5}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">${labels[i]}</text>
-                    <text x="${textX}" y="${textY + 12}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${sawLens[i].toFixed(0)}</text>
+                    <text x="${leftPct}%" y="${topPct}%" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${labels[i]}</text>
+                    <text x="${leftPct}%" y="${topPct}%" dy="1.2em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sawLens[i].toFixed(0)}</text>
                 `;
 
                 tableHTML += `
@@ -345,7 +352,7 @@
                 hs = parseFloat(document.getElementById('val_hs').value) || 0;
             }
 
-            const padding = 60;
+            const padding = 40;
             svg.setAttribute('viewBox', `${-padding} ${-h - padding} ${w + padding*2} ${h + padding*2}`);
 
             // --- ВНЕШНИЙ КОНТУР (СИНИЙ) ---
@@ -417,30 +424,54 @@
             let labels = [];
             let sawLens = [];
 
+            // Коэффициенты для перевода из координат фигуры в проценты экрана
+            const totalW = w + padding*2;
+            const totalH = h + padding*2;
+            const scaleX = 100 / totalW;
+            const scaleY = 100 / totalH;
+
             if (hs > 0) {
                 labels = ['Низ', 'Левая стойка', 'Изогнутая часть (гнуть)', 'Правая стойка'];
                 sawLens = [bottomWidth, sideHeight, archLength, sideHeight];
 
-                svg.innerHTML += `<text x="${w/2}" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Низ</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${bottomWidth.toFixed(0)}</text>`;
+                // Низ
+                let lPct = (w/2 + padding) * scaleX;
+                let tPct = (0 + padding) * scaleY;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Низ</text>`;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="2.4em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${bottomWidth.toFixed(0)}</text>`;
                 
-                svg.innerHTML += `<text x="-25" y="${-(h-hs)/2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" transform="rotate(-90, -25, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">Стойка</text>`;
-                svg.innerHTML += `<text x="-10" y="${-(h-hs)/2}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" transform="rotate(-90, -10, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">${sideHeight.toFixed(0)}</text>`;
+                // Левая стойка
+                lPct = (0 + padding) * scaleX;
+                tPct = (h/2 + padding) * scaleY;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="-3em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Стойка</text>`;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="-1.5em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sideHeight.toFixed(0)}</text>`;
 
-                svg.innerHTML += `<text x="${w+25}" y="${-(h-hs)/2}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" transform="rotate(90, ${w+25}, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">Стойка</text>`;
-                svg.innerHTML += `<text x="${w+10}" y="${-(h-hs)/2}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" transform="rotate(90, ${w+10}, ${-(h-hs)/2})" vector-effect="non-scaling-stroke">${sideHeight.toFixed(0)}</text>`;
+                // Правая стойка
+                lPct = (w + padding) * scaleX;
+                tPct = (h/2 + padding) * scaleY;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="3em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Стойка</text>`;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="1.5em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sideHeight.toFixed(0)}</text>`;
 
-                svg.innerHTML += `<text x="${w/2}" y="${-(h - hs/2) - 20}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Дуга (гнуть)</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="${-(h - hs/2) - 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${archLength.toFixed(0)}</text>`;
+                // Дуга
+                lPct = (w/2 + padding) * scaleX;
+                tPct = (h/2 + padding) * scaleY;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Дуга (гнуть)</text>`;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${archLength.toFixed(0)}</text>`;
             } else {
                 labels = ['Низ', 'Изогнутая часть (гнуть)'];
                 sawLens = [bottomWidth, archLength];
 
-                svg.innerHTML += `<text x="${w/2}" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Низ</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${bottomWidth.toFixed(0)}</text>`;
+                // Низ
+                let lPct = (w/2 + padding) * scaleX;
+                let tPct = (0 + padding) * scaleY;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Низ</text>`;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="2.4em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${bottomWidth.toFixed(0)}</text>`;
 
-                svg.innerHTML += `<text x="${w/2}" y="${-h/2 - 20}" text-anchor="middle" font-size="12" font-weight="bold" fill="#8E8E93" vector-effect="non-scaling-stroke">Дуга (гнуть)</text>`;
-                svg.innerHTML += `<text x="${w/2}" y="${-h/2 - 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#FF3B30" vector-effect="non-scaling-stroke">${archLength.toFixed(0)}</text>`;
+                // Дуга
+                lPct = (w/2 + padding) * scaleX;
+                tPct = (h/2 + padding) * scaleY;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Дуга (гнуть)</text>`;
+                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${archLength.toFixed(0)}</text>`;
             }
 
             for (let i = 0; i < labels.length; i++) {
