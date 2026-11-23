@@ -13,8 +13,11 @@
         .shape-btn { padding: 10px 5px; border: 2px solid #E5E5EA; border-radius: 10px; background: var(--card); font-size: 0.8em; font-weight: 600; text-align: center; cursor: pointer; color: var(--text); transition: all 0.2s; }
         .shape-btn.active { border-color: var(--primary); background: #E8F2FF; color: var(--primary); }
         
-        .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; position: relative; }
-        svg { width: 100%; height: 100%; overflow: visible; }
+        .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; position: relative; overflow: hidden; }
+        svg { width: 100%; height: 100%; }
+
+        /* Контейнер для текста поверх SVG */
+        .labels-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
@@ -38,6 +41,11 @@
         td { padding: 12px 4px; border-bottom: 1px solid #E5E5EA; font-weight: 600; }
         .td-name { text-align: left; font-weight: bold; color: var(--sec); font-size: 1.1em; }
         .td-saw { font-size: 1.2em; font-weight: bold; color: var(--primary); }
+        
+        /* Стили для HTML-текста поверх SVG */
+        .label-text { position: absolute; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; }
+        .label-name { font-size: 12px; font-weight: bold; color: #8E8E93; display: block; }
+        .label-value { font-size: 16px; font-weight: bold; color: #FF3B30; display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -52,8 +60,9 @@
             <div class="shape-btn" onclick="setShape('arch', this)" style="grid-column: span 2;">Арка</div>
         </div>
 
-        <div class="canvas-container">
+        <div class="canvas-container" id="canvasContainer">
             <svg id="drawingArea" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="labels-overlay" id="labelsOverlay"></div>
         </div>
 
         <div class="input-card" id="inputFields"></div>
@@ -275,7 +284,9 @@
 
         function drawSVG(glassPts, innerPts, sawLens, labels) {
             const svg = document.getElementById('drawingArea');
+            const overlay = document.getElementById('labelsOverlay');
             svg.innerHTML = ''; 
+            overlay.innerHTML = ''; // Очищаем текстовый слой
 
             const svgGlassPts = glassPts.map(p => ({x: p.x, y: -p.y})); 
             const svgInnerPts = innerPts.map(p => ({x: p.x, y: -p.y}));
@@ -287,9 +298,8 @@
             
             const w = maxX - minX || 10;
             const h = maxY - minY || 10;
-            const padding = 40; 
+            const padding = 60; // Отступ для границ фигуры
             
-            // Настраиваем viewBox только для линий, текст будет отрисовываться отдельно
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
             let glassPath = svgGlassPts.map(p => `${p.x},${p.y}`).join(' ');
@@ -302,9 +312,20 @@
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
 
-            // Коэффициенты для перевода из координат фигуры в проценты экрана
-            const scaleX = 100 / (w + padding*2);
-            const scaleY = 100 / (h + padding*2);
+            // Функция для перевода координат из SVG в пиксели экрана
+            const getScreenXY = (x, y) => {
+                const svgRect = svg.getBoundingClientRect();
+                const vbW = w + padding*2;
+                const vbH = h + padding*2;
+                // Учитываем реальное соотношение сторон viewBox и экрана
+                const scale = Math.min(svgRect.width / vbW, svgRect.height / vbH);
+                const offsetX = (svgRect.width - vbW * scale) / 2;
+                const offsetY = (svgRect.height - vbH * scale) / 2;
+
+                const screenX = (x - (minX - padding)) * scale + offsetX;
+                const screenY = (y - (minY - padding)) * scale + offsetY;
+                return { x: screenX, y: screenY };
+            };
 
             for (let i = 0; i < svgInnerPts.length; i++) {
                 const ip1 = svgInnerPts[i], ip2 = svgInnerPts[(i + 1) % svgInnerPts.length];
@@ -319,16 +340,19 @@
                     nx = -nx; ny = -ny;
                 }
                 
-                const textX = midX + nx * (padding/2);
-                const textY = midY + ny * (padding/2);
+                // Смещаем текст от линии
+                const textX = midX + nx * 25;
+                const textY = midY + ny * 25;
 
-                // Переводим координаты в проценты и создаем текст
-                const leftPct = (textX - (minX - padding)) * scaleX;
-                const topPct = (textY - (minY - padding)) * scaleY;
+                // Получаем экранные координаты
+                const screenPos = getScreenXY(textX, textY);
 
-                svg.innerHTML += `
-                    <text x="${leftPct}%" y="${topPct}%" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">${labels[i]}</text>
-                    <text x="${leftPct}%" y="${topPct}%" dy="1.2em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sawLens[i].toFixed(0)}</text>
+                // Добавляем HTML-текст в слой поверх SVG
+                overlay.innerHTML += `
+                    <div class="label-text" style="left: ${screenPos.x}px; top: ${screenPos.y}px;">
+                        <span class="label-name">${labels[i]}</span>
+                        <span class="label-value">${sawLens[i].toFixed(0)}</span>
+                    </div>
                 `;
 
                 tableHTML += `
@@ -343,7 +367,9 @@
 
         function drawArch() {
             const svg = document.getElementById('drawingArea');
+            const overlay = document.getElementById('labelsOverlay');
             svg.innerHTML = ''; 
+            overlay.innerHTML = '';
 
             const w = parseFloat(document.getElementById('val_w').value) || 1;
             const h = parseFloat(document.getElementById('val_h').value) || 1;
@@ -352,7 +378,7 @@
                 hs = parseFloat(document.getElementById('val_hs').value) || 0;
             }
 
-            const padding = 40;
+            const padding = 60;
             svg.setAttribute('viewBox', `${-padding} ${-h - padding} ${w + padding*2} ${h + padding*2}`);
 
             // --- ВНЕШНИЙ КОНТУР (СИНИЙ) ---
@@ -424,54 +450,50 @@
             let labels = [];
             let sawLens = [];
 
-            // Коэффициенты для перевода из координат фигуры в проценты экрана
-            const totalW = w + padding*2;
-            const totalH = h + padding*2;
-            const scaleX = 100 / totalW;
-            const scaleY = 100 / totalH;
+            // Функция для перевода координат из SVG в пиксели
+            const getScreenXY = (x, y) => {
+                const svgRect = svg.getBoundingClientRect();
+                const vbW = w + padding*2;
+                const vbH = h + padding*2;
+                const scale = Math.min(svgRect.width / vbW, svgRect.height / vbH);
+                const offsetX = (svgRect.width - vbW * scale) / 2;
+                const offsetY = (svgRect.height - vbH * scale) / 2;
+
+                const screenX = (x + padding) * scale + offsetX;
+                const screenY = (y + h + padding) * scale + offsetY;
+                return { x: screenX, y: screenY };
+            };
 
             if (hs > 0) {
                 labels = ['Низ', 'Левая стойка', 'Изогнутая часть (гнуть)', 'Правая стойка'];
                 sawLens = [bottomWidth, sideHeight, archLength, sideHeight];
 
                 // Низ
-                let lPct = (w/2 + padding) * scaleX;
-                let tPct = (0 + padding) * scaleY;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Низ</text>`;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="2.4em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${bottomWidth.toFixed(0)}</text>`;
+                let pos = getScreenXY(w/2, 0);
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-top: 20px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
                 
                 // Левая стойка
-                lPct = (0 + padding) * scaleX;
-                tPct = (h/2 + padding) * scaleY;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="-3em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Стойка</text>`;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="-1.5em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sideHeight.toFixed(0)}</text>`;
+                pos = getScreenXY(0, -h/2);
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-left: -40px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
 
                 // Правая стойка
-                lPct = (w + padding) * scaleX;
-                tPct = (h/2 + padding) * scaleY;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="3em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Стойка</text>`;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dx="1.5em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${sideHeight.toFixed(0)}</text>`;
+                pos = getScreenXY(w, -h/2);
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-left: 40px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
 
                 // Дуга
-                lPct = (w/2 + padding) * scaleX;
-                tPct = (h/2 + padding) * scaleY;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Дуга (гнуть)</text>`;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${archLength.toFixed(0)}</text>`;
+                pos = getScreenXY(w/2, -h/2);
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px;"><span class="label-name">Дуга (гнуть)</span><span class="label-value">${archLength.toFixed(0)}</span></div>`;
             } else {
                 labels = ['Низ', 'Изогнутая часть (гнуть)'];
                 sawLens = [bottomWidth, archLength];
 
                 // Низ
-                let lPct = (w/2 + padding) * scaleX;
-                let tPct = (0 + padding) * scaleY;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Низ</text>`;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="2.4em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${bottomWidth.toFixed(0)}</text>`;
+                let pos = getScreenXY(w/2, 0);
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px; margin-top: 20px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
 
                 // Дуга
-                lPct = (w/2 + padding) * scaleX;
-                tPct = (h/2 + padding) * scaleY;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" text-anchor="middle" font-size="14" font-weight="bold" fill="#8E8E93">Дуга (гнуть)</text>`;
-                svg.innerHTML += `<text x="${lPct}%" y="${tPct}%" dy="1.2em" text-anchor="middle" font-size="16" font-weight="bold" fill="#FF3B30">${archLength.toFixed(0)}</text>`;
+                pos = getScreenXY(w/2, -h/2);
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px;"><span class="label-name">Дуга (гнуть)</span><span class="label-value">${archLength.toFixed(0)}</span></div>`;
             }
 
             for (let i = 0; i < labels.length; i++) {
@@ -486,6 +508,9 @@
         }
 
         renderInputs();
+        
+        // Пересчитываем позиции текста при изменении размера окна (поворот телефона)
+        window.addEventListener('resize', calculateAndDraw);
     </script>
 </body>
 </html>
