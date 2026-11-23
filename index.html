@@ -16,7 +16,6 @@
         .canvas-container { background: var(--card); border-radius: 16px; padding: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; height: 280px; position: relative; overflow: hidden; }
         svg { width: 100%; height: 100%; }
 
-        /* Контейнер для текста поверх SVG */
         .labels-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
         .input-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -42,10 +41,10 @@
         .td-name { text-align: left; font-weight: bold; color: var(--sec); font-size: 1.1em; }
         .td-saw { font-size: 1.2em; font-weight: bold; color: var(--primary); }
         
-        /* Стили для HTML-текста поверх SVG */
-        .label-text { position: absolute; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; background: rgba(255,255,255,0.8); padding: 2px 5px; border-radius: 4px; }
-        .label-name { font-size: 12px; font-weight: bold; color: #8E8E93; display: block; }
-        .label-value { font-size: 16px; font-weight: bold; color: #FF3B30; display: block; margin-top: 2px; }
+        /* Убрали белый фон, чтобы не перекрывать линии */
+        .label-text { position: absolute; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; }
+        .label-name { font-size: 11px; font-weight: bold; color: #8E8E93; display: block; }
+        .label-value { font-size: 15px; font-weight: bold; color: #FF3B30; display: block; margin-top: 1px; }
     </style>
 </head>
 <body>
@@ -298,7 +297,7 @@
             
             const w = maxX - minX || 10;
             const h = maxY - minY || 10;
-            const padding = 60; 
+            const padding = 80; // Увеличили отступ для картинки
             
             svg.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${w + padding*2} ${h + padding*2}`);
             
@@ -312,7 +311,6 @@
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
 
-            // Функция для перевода координат из SVG в пиксели экрана
             const getScreenXY = (x, y) => {
                 const svgRect = svg.getBoundingClientRect();
                 const vbW = w + padding*2;
@@ -339,15 +337,20 @@
                     nx = -nx; ny = -ny;
                 }
                 
-                // Вычисляем экранные координаты середины стороны
+                // Экранные координаты
                 const midScreen = getScreenXY(midX, midY);
+                
+                // Смещаем на 40 пикселей наружу
+                const textScreenX = midScreen.x + nx * 40;
+                const textScreenY = midScreen.y + ny * 40;
 
-                // Отодвигаем текст наружу на 35 пикселей уже в экранных координатах
-                const textScreenX = midScreen.x + nx * 35;
-                const textScreenY = midScreen.y + ny * 35;
+                // Проверяем, чтобы текст не выходил за пределы картинки
+                const containerRect = document.getElementById('canvasContainer').getBoundingClientRect();
+                const safeX = Math.max(40, Math.min(textScreenX, containerRect.width - 40));
+                const safeY = Math.max(20, Math.min(textScreenY, containerRect.height - 20));
 
                 overlay.innerHTML += `
-                    <div class="label-text" style="left: ${textScreenX}px; top: ${textScreenY}px;">
+                    <div class="label-text" style="left: ${safeX}px; top: ${safeY}px;">
                         <span class="label-name">${labels[i]}</span>
                         <span class="label-value">${sawLens[i].toFixed(0)}</span>
                     </div>
@@ -376,10 +379,9 @@
                 hs = parseFloat(document.getElementById('val_hs').value) || 0;
             }
 
-            const padding = 60;
+            const padding = 80;
             svg.setAttribute('viewBox', `${-padding} ${-h - padding} ${w + padding*2} ${h + padding*2}`);
 
-            // --- ВНЕШНИЙ КОНТУР (СИНИЙ) ---
             let glassPath = '';
             if (hs > 0) {
                 const ry = h - hs;
@@ -389,7 +391,6 @@
             }
             svg.innerHTML += `<path d="${glassPath}" fill="rgba(0, 122, 255, 0.05)" stroke="#007AFF" stroke-width="2" />`;
 
-            // --- ВНУТРЕННИЙ КОНТУР (КРАСНЫЙ) ---
             const innerW = w - 2 * OFFSET;
             const innerHs = hs > 0 ? hs - OFFSET : 0;
             
@@ -422,7 +423,6 @@
             
             svg.innerHTML += `<path d="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" />`;
 
-            // --- МАТЕМАТИКА РАСЧЕТА ДЛИН ---
             const bottomWidth = innerW + TAPE;
             const sideHeight = (hs > 0) ? innerHs + TAPE : 0;
 
@@ -448,7 +448,6 @@
             let labels = [];
             let sawLens = [];
 
-            // Функция для перевода координат из SVG в пиксели
             const getScreenXY = (x, y) => {
                 const svgRect = svg.getBoundingClientRect();
                 const vbW = w + padding*2;
@@ -466,30 +465,24 @@
                 labels = ['Низ', 'Левая стойка', 'Изогнутая часть (гнуть)', 'Правая стойка'];
                 sawLens = [bottomWidth, sideHeight, archLength, sideHeight];
 
-                // Низ
                 let pos = getScreenXY(w/2, 0);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y + 35}px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y + 40}px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
                 
-                // Левая стойка
                 pos = getScreenXY(0, -h/2);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x - 45}px; top: ${pos.y}px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${Math.max(40, pos.x - 45)}px; top: ${pos.y}px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
 
-                // Правая стойка
                 pos = getScreenXY(w, -h/2);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x + 45}px; top: ${pos.y}px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${Math.min(document.getElementById('canvasContainer').getBoundingClientRect().width - 40, pos.x + 45)}px; top: ${pos.y}px;"><span class="label-name">Стойка</span><span class="label-value">${sideHeight.toFixed(0)}</span></div>`;
 
-                // Дуга
                 pos = getScreenXY(w/2, -h/2);
                 overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px;"><span class="label-name">Дуга (гнуть)</span><span class="label-value">${archLength.toFixed(0)}</span></div>`;
             } else {
                 labels = ['Низ', 'Изогнутая часть (гнуть)'];
                 sawLens = [bottomWidth, archLength];
 
-                // Низ
                 let pos = getScreenXY(w/2, 0);
-                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y + 35}px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
+                overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y + 40}px;"><span class="label-name">Низ</span><span class="label-value">${bottomWidth.toFixed(0)}</span></div>`;
 
-                // Дуга
                 pos = getScreenXY(w/2, -h/2);
                 overlay.innerHTML += `<div class="label-text" style="left: ${pos.x}px; top: ${pos.y}px;"><span class="label-name">Дуга (гнуть)</span><span class="label-value">${archLength.toFixed(0)}</span></div>`;
             }
