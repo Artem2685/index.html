@@ -141,8 +141,8 @@
 
                 let inputsHtml = `
                     <div class="input-grid">
-                        <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="500" oninput="calculateAndDraw()"></div>
-                        <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_h" value="450" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Общая ширина, мм</label><input type="number" id="val_w" value="1212" oninput="calculateAndDraw()"></div>
+                        <div class="input-group"><label>Общая высота, мм</label><input type="number" id="val_h" value="664" oninput="calculateAndDraw()"></div>
                         ${archHasPosts ? `<div class="input-group"><label>Высота прямых стоек, мм</label><input type="number" id="val_hs" value="270" oninput="calculateAndDraw()"></div>` : ''}
                     </div>
                 `;
@@ -359,12 +359,10 @@
             
             if (hs > 0) {
                 framePath += `L ${OFFSET},${-innerHs} `;
-                // Дуга от левой стойки к правой
                 const innerRy = h - OFFSET - innerHs;
                 const arcSteps = 50; 
                 for (let i = 1; i < arcSteps; i++) {
                     const t = Math.PI - (i / arcSteps) * Math.PI; 
-                    // ИСПРАВЛЕНИЕ: Здесь мы строго вычитаем высоту дуги, чтобы она шла внутрь
                     const px = w/2 + (innerW/2) * Math.cos(t);
                     const py = -innerHs - innerRy * Math.sin(t);
                     framePath += `L ${px},${py} `;
@@ -386,7 +384,7 @@
             
             svg.innerHTML += `<path d="${framePath}" fill="none" stroke="#FF3B30" stroke-width="3" />`;
 
-            // --- МАТЕМАТИКА РАСЧЕТА ДЛИН ---
+            // --- МАТЕМАТИКА РАСЧЕТА ДЛИН (ИСПРАВЛЕНО ДЛЯ АРОК) ---
             const bottomWidth = innerW + TAPE;
             const sideHeight = (hs > 0) ? innerHs + TAPE : 0;
 
@@ -398,9 +396,24 @@
                 b = h - 2 * OFFSET;
             }
 
-            const h_ellipse = Math.pow((a - b) / (a + b), 2);
-            const perimeter = Math.PI * (a + b) * (1 + (3 * h_ellipse) / (10 + Math.sqrt(4 - 3 * h_ellipse)));
-            const archLength = (perimeter / 2) + TAPE; 
+            // ИСПОЛЬЗУЕМ ФОРМУЛУ ОКРУЖНОСТИ (ЦИРКУЛЬНУЮ ДУГУ) ДЛЯ АРОК
+            let archLength = 0;
+            if (a > 0 && b > 0) {
+                if (a >= b) {
+                    // Если ширина больше высоты - это полукруг или пологая арка
+                    const radius = (a*a + b*b) / (2*b);
+                    const angle = Math.asin(a / radius);
+                    archLength = radius * angle * 2;
+                } else {
+                    // Если высота больше ширины - вытянутая арка
+                    const radius = (a*a + b*b) / (2*a);
+                    const angle = Math.asin(b / radius);
+                    archLength = radius * angle * 2;
+                }
+            }
+            
+            // Прибавляем 20 мм на рулетку
+            archLength += TAPE;
 
             let tableHTML = '';
             let labels = [];
